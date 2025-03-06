@@ -16,13 +16,36 @@ const User = sequelize.define('user', {
 
 const Admin = sequelize.define('admin', {
     id_admin: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    email: { type: DataTypes.STRING, allowNull: false },
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
     lastname: { type: DataTypes.STRING, allowNull: false },
     firstname: { type: DataTypes.STRING, allowNull: false },
     middlename: { type: DataTypes.STRING },
     last_login: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: false }
+});
+
+// Хук для создания начальной записи администратора
+Admin.afterSync(async () => {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD; // Хешированный пароль
+
+    const existingAdmin = await Admin.findOne({ where: { email: adminEmail } });
+    if (!existingAdmin) {
+        await Admin.create({
+            email: adminEmail,
+            password: adminPassword,
+            lastname: 'admin',
+            firstname: 'admin',
+            last_login: new Date(),
+            is_active: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        console.log('Начальная запись администратора создана.');
+    } else {
+        console.log('Начальная запись администратора уже существует.');
+    }
 });
 
 const Blacklist = sequelize.define('blacklist', {
