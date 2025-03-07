@@ -10,5 +10,6 @@ router.get('/auth/check', adminAuthMiddleware, adminController.checkAdmin)
 router.post('/create/admin', adminAuthMiddleware, adminController.createAdmin)
 
 router.use('/blacklist', blacklistRouter)
+router.get('/support/getAllAppeal', adminAuthMiddleware, blacklistController.getAll)
 
 module.exports = router
