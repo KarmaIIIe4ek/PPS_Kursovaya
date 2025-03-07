@@ -3,9 +3,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const {User} = require('../models/models')
 
-const generateJwt = (id, email, role) => {
+const generateJwt = (id_user, email, role) => {
     return jwt.sign(
-        {id, email, role},
+        {id_user, email, role},
         process.env.SECRET_KEY,
         {expiresIn: '24h'}
     )
@@ -43,7 +43,7 @@ class AuthController {
         });
     
         // Генерация JWT токена
-        const token = generateJwt(user.id, user.email, user.role_name);
+        const token = generateJwt(user.id_user, user.email, user.role_name);
     
         // Возвращаем токен в ответе
         return res.json({ token });
@@ -59,12 +59,12 @@ class AuthController {
         if (!comparePassword) {
             return next(ApiError.internal('Указан неверный пароль'))
         }
-        const token = generateJwt(user.id, user.email, user.role_name)
+        const token = generateJwt(user.id_user, user.email, user.role_name)
         return res.json({token})
     }
 
     async check(req, res, next) {
-        const token = generateJwt(req.user.id, req.user.email, req.user.role_name)
+        const token = generateJwt(req.user.id_user, req.user.email, req.user.role_name)
         return res.json({token})
     }
 }

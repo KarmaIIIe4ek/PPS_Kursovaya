@@ -18,19 +18,21 @@ module.exports = async function (req, res, next) {
 
         // Проверяем, не заблокирован ли пользователь
         const user = await User.findOne({ where: { email: decoded.email } });
+        if (!user) {
+            return res.status(403).json({ message: "Доступ запрещен: Аккаунт не найден" });
+        }
         if (!user || user.is_blocked) {
-            return res.status(403).json({ message: "Доступ запрещен: аккаунт заблокирован" });
+            return res.status(403).json({ message: "Доступ запрещен: Аккаунт заблокирован" });
         }
 
-        const blacklist = await Blacklist.findOne({ where: { id_user: decoded.id } });
+        const blacklist = await Blacklist.findOne({ where: { id_user: user.id_user } });
         if (blacklist) {
-            return res.status(403).json({ message: "Доступ запрещен: аккаунт добавлен в чёрный список" });
+            return res.status(403).json({ message: "Доступ запрещен: Аккаунт добавлен в чёрный список" });
         }
 
-        const userId = decoded.id;
         await User.update(
             { last_login: new Date() },
-            { where: { id_user: userId } }
+            { where: { id_user: user.id_user } }
         );
 
         next(); // Передаем управление следующему middleware или контроллеру

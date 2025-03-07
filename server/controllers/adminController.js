@@ -3,9 +3,9 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const {Admin} = require('../models/models')
 
-const generateJwt = (id, email, role_name) => {
+const generateJwt = (id_admin, email, role_name) => {
     return jwt.sign(
-        {id, email, role_name},
+        {id_admin, email, role_name},
         process.env.SECRET_KEY,
         {expiresIn: '24h'}
     )
@@ -17,7 +17,7 @@ class AdminController {
         if (!email || !password) {
             return next(ApiError.badRequest('Некорректный email или password'))
         }
-        const candidate = await User.findOne({where: {email}})
+        const candidate = await Admin.findOne({where: {email}})
         if (candidate) {
             return next(ApiError.badRequest('Пользователь с таким email уже существует'))
         }
@@ -35,7 +35,7 @@ class AdminController {
         });
     
         // Генерация JWT токена
-        const token = generateJwt(admin.id, admin.email, "admin");
+        const token = generateJwt(admin.id_admin, admin.email, "admin");
     
         // Возвращаем токен в ответе
         return res.json({ token });
@@ -51,12 +51,12 @@ class AdminController {
         if (!comparePassword) {
             return next(ApiError.internal('Указан неверный пароль'))
         }
-        const token = generateJwt(admin.id, admin.email, "admin")
+        const token = generateJwt(admin.id_admin, admin.email, "admin")
         return res.json({token})
     }
 
     async checkAdmin(req, res, next) {
-        const token = generateJwt(req.admin.id, req.admin.email, "admin")
+        const token = generateJwt(req.admin.id_admin, req.admin.email, "admin")
         return res.json({token})
     }
 }

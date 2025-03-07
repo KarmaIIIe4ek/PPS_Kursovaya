@@ -1,9 +1,9 @@
 const Router = require('express')
 const router = new Router()
-const blacklistController = require('../controllers/blacklistController')
 const authMiddleware = require('../middleware/authMiddleware')
+const supportController = require('../controllers/supportController')
 
-router.post('/sendToSupport', authMiddleware, blacklistController.addToBlacklist)
-router.get('/getListMyAppeal', authMiddleware, blacklistController.removeFromBlacklist)
+router.post('/sendToSupport', authMiddleware, supportController.sendToSupport)
+router.get('/getListMyAppeal', authMiddleware, supportController.getListMyAppeal)
 
 module.exports = router
