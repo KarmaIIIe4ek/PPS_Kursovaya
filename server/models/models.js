@@ -48,6 +48,19 @@ Admin.afterSync(async () => {
     }
 });
 
+const Support = sequelize.define('support', {
+    id_support: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    user_text: { type: DataTypes.TEXT },
+    status: { type: DataTypes.STRING },
+    admin_response: { type: DataTypes.TEXT }
+});
+
+// Связь с Group и Task
+Support.belongsTo(Admin, { foreignKey: 'id_admin' });
+Support.belongsTo(User, { foreignKey: 'id_user' });
+Admin.hasMany(Support, { foreignKey: 'id_admin' });
+User.hasMany(Support, { foreignKey: 'id_user' });
+
 const Blacklist = sequelize.define('blacklist', {
     id_blacklist: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     reason: { type: DataTypes.TEXT }
@@ -117,6 +130,7 @@ module.exports = {
     Admin,
     Blacklist,
     Group,
+    Support,
     UsersInGroup,
     Task,
     TaskForGroup,
