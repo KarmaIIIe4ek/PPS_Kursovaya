@@ -1,27 +1,34 @@
-const ApiError = require('../error/ApiError');
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
-const {Admin} = require('../models/models')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { Admin } = require('../models/models');
 
 const generateJwt = (id_admin, email, role_name) => {
     return jwt.sign(
-        {id_admin, email, role_name},
+        { id_admin, email, role_name },
         process.env.SECRET_KEY,
-        {expiresIn: '24h'}
-    )
-}
+        { expiresIn: '24h' }
+    );
+};
 
 class AdminController {
     async createAdmin(req, res, next) {
-        const {lastname, firstname, middlename, email, password} = req.body
+        const { lastname, firstname, middlename, email, password } = req.body;
+
+        // Проверка наличия email и password
         if (!email || !password) {
-            return next(ApiError.badRequest('Некорректный email или password'))
+            return res.status(400).json({ message: 'Некорректный email или password' });
         }
-        const candidate = await Admin.findOne({where: {email}})
+
+        // Проверка, существует ли администратор с таким email
+        const candidate = await Admin.findOne({ where: { email } });
         if (candidate) {
-            return next(ApiError.badRequest('Пользователь с таким email уже существует'))
+            return res.status(400).json({ message: 'Администратор с таким email уже существует' });
         }
-        const hashPassword = await bcrypt.hash(password, 5)
+
+        // Хеширование пароля
+        const hashPassword = await bcrypt.hash(password, 5);
+
+        // Создание администратора
         const admin = await Admin.create({
             email,
             password: hashPassword,
@@ -33,32 +40,101 @@ class AdminController {
             createdAt: new Date(), // Sequelize автоматически добавляет это поле, но можно указать вручную
             updatedAt: new Date() // Sequelize автоматически добавляет это поле, но можно указать вручную
         });
-    
+
+        // Форматируем ответ
+        const formattedAdmin = {
+            id_admin: admin.id_admin,
+            email: admin.email,
+            lastname: admin.lastname,
+            firstname: admin.firstname,
+            middlename: admin.middlename,
+            is_active: admin.is_active
+        };
+
+        // Возвращаем созданную запись в ответе
+        return res.json({ formattedAdmin });
+    }
+
+    async loginAdmin(req, res, next) {
+        const { email, password } = req.body;
+
+        // Поиск администратора по email
+        const admin = await Admin.findOne({ where: { email } });
+        if (!admin) {
+            return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+
+        // Проверка пароля
+        const comparePassword = bcrypt.compareSync(password, admin.password);
+        if (!comparePassword) {
+            return res.status(400).json({ message: 'Указан неверный пароль' });
+        }
+
         // Генерация JWT токена
         const token = generateJwt(admin.id_admin, admin.email, "admin");
-    
+
         // Возвращаем токен в ответе
         return res.json({ token });
     }
 
-    async loginAdmin(req, res, next) {
-        const {email, password} = req.body
-        const admin = await Admin.findOne({where: {email}})
-        if (!admin) {
-            return next(ApiError.internal('Пользователь не найден'))
+    async editAdminSelfFromToken(req, res, next) {
+        const { lastname, firstname, middlename, email, password, is_active } = req.body;
+
+        // Поиск администратора по id_admin из токена
+        const candidate = await Admin.findOne({
+            where: { id_admin: req.admin.id_admin }
+        });
+
+        // Проверка, является ли email защищённым (например, email суперадмина)
+        if (candidate.email === process.env.ADMIN_EMAIL) {
+            return res.status(400).json({ message: 'Эту учётную запись нельзя изменять' });
         }
-        let comparePassword = bcrypt.compareSync(password, admin.password)
-        if (!comparePassword) {
-            return next(ApiError.internal('Указан неверный пароль'))
+
+        // Проверка, существует ли другой администратор с таким email
+        if (email && candidate) {
+            const existingAdmin = await Admin.findOne({ where: { email } });
+            if (existingAdmin && existingAdmin.id_admin !== candidate.id_admin) {
+                return res.status(400).json({ message: 'Администратор с таким email уже существует' });
+            }
         }
-        const token = generateJwt(admin.id_admin, admin.email, "admin")
-        return res.json({token})
+
+        // Хеширование пароля, если он был передан
+        const hashedPassword = password ? await bcrypt.hash(password, 5) : candidate.password;
+
+        // Обновление данных администратора
+        const updatedAdmin = await candidate.update({
+            email: email || candidate.email,
+            password: hashedPassword,
+            lastname: lastname || candidate.lastname,
+            firstname: firstname || candidate.firstname,
+            middlename: middlename || candidate.middlename,
+            is_active: is_active !== undefined ? is_active : candidate.is_active
+        });
+
+        // Форматируем ответ
+        const admin = {
+            id_admin: updatedAdmin.id_admin,
+            email: updatedAdmin.email,
+            lastname: updatedAdmin.lastname,
+            firstname: updatedAdmin.firstname,
+            middlename: updatedAdmin.middlename,
+            is_active: updatedAdmin.is_active
+        };
+        // Генерация JWT токена
+        const token = generateJwt(updatedAdmin.id_admin, updatedAdmin.email, "admin");
+
+        // Возвращаем обновлённую запись в ответе
+        return res.json({ 
+            token, 
+            admin 
+        });
     }
 
     async checkAdmin(req, res, next) {
-        const token = generateJwt(req.admin.id_admin, req.admin.email, "admin")
-        return res.json({token})
+        // Генерация нового токена для проверки авторизации
+        const token = generateJwt(req.admin.id_admin, req.admin.email, "admin");
+        return res.json({ token });
     }
 }
 
-module.exports = new AdminController()
+module.exports = new AdminController();

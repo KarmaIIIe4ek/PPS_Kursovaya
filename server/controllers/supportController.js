@@ -1,4 +1,3 @@
-const ApiError = require('../error/ApiError');
 const {Support, User} = require('../models/models')
 
 class SupportController {
@@ -13,7 +12,7 @@ class SupportController {
 
             const user = await User.findOne({where: {id_user: req.user.id_user}})
             if (!user) {
-                return next(ApiError.internal('Пользователь не найден'))
+                return res.status(404).json({message: "Пользователь не найден"})
             }
 
             const support = await Support.create({
@@ -86,7 +85,7 @@ class SupportController {
         try {
             const [updatedCount, [updatedSupport]] = await Support.update(
                 {
-                    admin_response: req.body.admin_response,
+                    admin_response: req.body.admin_response ? req.body.admin_response : Support.admin_response,
                     status: req.body.status
                 },
                 {

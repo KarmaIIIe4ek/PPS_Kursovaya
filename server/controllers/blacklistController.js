@@ -1,4 +1,3 @@
-const ApiError = require('../error/ApiError');
 const {Blacklist, User, Group, UsersInGroup} = require('../models/models')
 
 class BlacklistController {

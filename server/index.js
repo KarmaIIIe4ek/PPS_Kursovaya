@@ -3,8 +3,8 @@ const express = require('express')
 const cors = require('cors')
 const sequelize = require('./db')
 const models = require('./models/models')
-const userRoutes = require('./routes/index');
-const adminRoutes = require('./routes/adminRouter');
+const userRoutes = require('./routes/user/index');
+const adminRoutes = require('./routes/admin/adminRouter');
 
 const PORT_USER = process.env.PORT_USER || 5000
 const PORT_ADMIN =  process.env.PORT_ADMIN || 5001;
@@ -14,7 +14,7 @@ const appAdmin = express(); // Приложение для админ-панел
 
 appAdmin.use(cors())
 appUser.use(cors())
-appAdmin.use(express.json());
+appAdmin.use(express.json())
 appUser.use(express.json())
 
 appUser.use('/', userRoutes);

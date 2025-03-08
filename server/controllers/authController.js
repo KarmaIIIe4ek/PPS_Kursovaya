@@ -1,33 +1,42 @@
-const ApiError = require('../error/ApiError');
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
-const {User} = require('../models/models')
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { User, Group } = require('../models/models');
 
 const generateJwt = (id_user, email, role) => {
     return jwt.sign(
-        {id_user, email, role},
+        { id_user, email, role },
         process.env.SECRET_KEY,
-        {expiresIn: '24h'}
-    )
-}
+        { expiresIn: '24h' }
+    );
+};
 
 class AuthController {
     async registration(req, res, next) {
-        const {lastname, firstname, middlename, role_name, group, email, password} = req.body
+        const { lastname, firstname, middlename, role_name, group, email, password } = req.body;
+
+        // Проверка наличия email и password
         if (!email || !password) {
-            return next(ApiError.badRequest('Некорректный email или password'))
+            return res.status(400).json({ message: 'Некорректный email или password' });
         }
+
+        // Проверка существования группы, если она указана
         if (group) {
             const existingGroup = await Group.findOne({ where: { id_group: group } });
             if (!existingGroup) {
-                return next(ApiError.badRequest('Группа с таким ID не существует'));
+                return res.status(400).json({ message: 'Группа с таким ID не существует' });
             }
         }
-        const candidate = await User.findOne({where: {email}})
+
+        // Проверка, существует ли пользователь с таким email
+        const candidate = await User.findOne({ where: { email } });
         if (candidate) {
-            return next(ApiError.badRequest('Пользователь с таким email уже существует'))
+            return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
         }
-        const hashPassword = await bcrypt.hash(password, 5)
+
+        // Хеширование пароля
+        const hashPassword = await bcrypt.hash(password, 5);
+
+        // Создание пользователя
         const user = await User.create({
             email,
             password: hashPassword,
@@ -41,32 +50,41 @@ class AuthController {
             createdAt: new Date(), // Sequelize автоматически добавляет это поле, но можно указать вручную
             updatedAt: new Date() // Sequelize автоматически добавляет это поле, но можно указать вручную
         });
-    
+
         // Генерация JWT токена
         const token = generateJwt(user.id_user, user.email, user.role_name);
-    
+
         // Возвращаем токен в ответе
         return res.json({ token });
     }
 
     async login(req, res, next) {
-        const {email, password} = req.body
-        const user = await User.findOne({where: {email}})
+        const { email, password } = req.body;
+
+        // Поиск пользователя по email
+        const user = await User.findOne({ where: { email } });
         if (!user) {
-            return next(ApiError.internal('Пользователь не найден'))
+            return res.status(404).json({ message: 'Пользователь не найден' });
         }
-        let comparePassword = bcrypt.compareSync(password, user.password)
+
+        // Проверка пароля
+        const comparePassword = bcrypt.compareSync(password, user.password);
         if (!comparePassword) {
-            return next(ApiError.internal('Указан неверный пароль'))
+            return res.status(400).json({ message: 'Указан неверный пароль' });
         }
-        const token = generateJwt(user.id_user, user.email, user.role_name)
-        return res.json({token})
+
+        // Генерация JWT токена
+        const token = generateJwt(user.id_user, user.email, user.role_name);
+
+        // Возвращаем токен в ответе
+        return res.json({ token });
     }
 
     async check(req, res, next) {
-        const token = generateJwt(req.user.id_user, req.user.email, req.user.role_name)
-        return res.json({token})
+        // Генерация нового токена для проверки авторизации
+        const token = generateJwt(req.user.id_user, req.user.email, req.user.role_name);
+        return res.json({ token });
     }
 }
 
-module.exports = new AuthController()
+module.exports = new AuthController();

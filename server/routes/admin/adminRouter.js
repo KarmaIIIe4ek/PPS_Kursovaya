@@ -1,15 +1,16 @@
 const Router = require('express')
 const router = new Router()
-const adminController = require('../controllers/adminController')
-const adminAuthMiddleware = require('../middleware/adminAuthMiddleware')
+const adminController = require('../../controllers/adminController')
+const adminAuthMiddleware = require('../../middleware/adminAuthMiddleware')
 const blacklistRouter = require('./blacklistRouter')
-const supportController = require('../controllers/supportController')
-const adminUserController = require('../controllers/adminUserController')
+const supportController = require('../../controllers/supportController')
+const adminUserController = require('../../controllers/adminUserController')
 
 router.post('/auth/login', adminController.loginAdmin)
 router.get('/auth/check', adminAuthMiddleware, adminController.checkAdmin)
 
-router.post('/create/admin', adminAuthMiddleware, adminController.createAdmin)
+router.post('/createAdmin', adminAuthMiddleware, adminController.createAdmin)
+router.post('/updateAdmin', adminAuthMiddleware, adminController.editAdminSelfFromToken)
 
 router.use('/blacklist', blacklistRouter)
 
