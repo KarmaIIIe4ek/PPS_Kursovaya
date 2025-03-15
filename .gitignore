@@ -19,4 +19,4 @@
 /client/yarn-error.log*
 
 /server/node_modules
-/server/certificate
+# /server/certificate
