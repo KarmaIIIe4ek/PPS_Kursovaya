@@ -92,6 +92,7 @@ Group.hasMany(UsersInGroup, { foreignKey: 'id_group' });
 
 const Task = sequelize.define('task', {
     id_task: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    is_available: { type: DataTypes.BOOLEAN, defaultValue: false },
     task_name: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT },
 });

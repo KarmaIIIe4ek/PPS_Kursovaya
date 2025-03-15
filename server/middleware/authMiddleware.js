@@ -29,7 +29,7 @@ module.exports = async function (req, res, next) {
         if (blacklist) {
             return res.status(403).json({ message: "Доступ запрещен: Аккаунт добавлен в чёрный список" });
         }
-
+        
         await User.update(
             { last_login: new Date() },
             { where: { id_user: user.id_user } }

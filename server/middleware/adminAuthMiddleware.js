@@ -17,7 +17,7 @@ module.exports = async function (req, res, next) {
         req.admin = decoded;
 
         // Проверяем, является ли пользователь администратором
-        if (decoded.role_name !== "admin") {
+        if (decoded.role !== "admin") {
             return res.status(403).json({ message: "Доступ запрещен: недостаточно прав" });
         }
 

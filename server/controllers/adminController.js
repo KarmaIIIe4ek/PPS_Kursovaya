@@ -1,14 +1,6 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const { Admin } = require('../models/models');
-
-const generateJwt = (id_admin, email, role_name) => {
-    return jwt.sign(
-        { id_admin, email, role_name },
-        process.env.SECRET_KEY,
-        { expiresIn: '24h' }
-    );
-};
+const generateJwt = require('../utils/jwtGenerate')
 
 class AdminController {
     async createAdmin(req, res, next) {
