@@ -126,7 +126,7 @@ class GroupController {
                         }
                     ]
                 });
-    
+                
                 // Форматируем данные о пользователях
                 const usersData = users.map(user => ({
                     id_user: user.user.id_user,
@@ -147,7 +147,8 @@ class GroupController {
                         }
                     ]
                 });
-    
+                
+                
                 // Форматируем данные о Заданиях
                 const tasksData = tasks.map(task => ({
                     id_task: task.task.id_task,
@@ -336,6 +337,52 @@ class GroupController {
         } catch (e) {
             console.error('Ошибка при изменении доступности выполнении задания группой:', e);
             return res.status(500).json({ message: "Произошла ошибка при изменении доступности выполнении задания группой" });
+        }
+    }
+
+    async getAllMyAccess(req, res, next) {
+    
+        try {
+
+            // Поиск группы по id_user (преподавателя)
+            const groups = await Group.findAll({ where: { id_user: req.user.id },
+                include: [
+                    {
+                        model: TaskForGroup,
+                        include: [
+                            {
+                            model: Task
+                        }
+                    ]
+                    }
+                ]
+            });
+    
+            // Форматируем ответ
+        const formattedGroups = groups.map(group => {
+            return {
+                group_number: group.group_number,
+                hash_code_login: group.hash_code_login,
+                tasks: group.task_for_groups.map(taskForGroup => ({
+                    id_task_for_group: taskForGroup.id_task_for_group,
+                    is_open: taskForGroup.is_open,
+                    deadline: taskForGroup.deadline,
+                    task: {
+                        id_task: taskForGroup.task.id_task,
+                        task_name: taskForGroup.task.task_name,
+                        description: taskForGroup.task.description
+                    }
+                }))
+            };
+        });
+
+        return res.json({
+            formattedGroups
+         });
+            
+        } catch (e) {
+            console.error('Ошибка при получении списка групп с выданными им правами:', e);
+            return res.status(500).json({ message: "Произошла ошибка при получении списка групп с выданными им правами" });
         }
     }
 }

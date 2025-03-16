@@ -78,6 +78,52 @@ class AuthController {
         const token = generateJwt(req.user.id_user, req.user.email, req.user.role_name);
         return res.json({ token });
     }
+
+    async editSelfFromToken(req, res, next) {
+        const { email, password, lastname, firstname, middlename } = req.body;
+
+        // Поиск пользователя по id из токена
+        const candidate = await User.findOne({
+            where: { id_user: req.user.id }
+        });
+
+        // Проверка, существует ли другой пользователь с таким email
+        if (email && candidate) {
+            const existingUser = await User.findOne({ where: { email } });
+            if (existingUser && existingUser.id_user !== candidate.id_user) {
+                return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+            }
+        }
+
+        // Хеширование пароля, если он был передан
+        const hashedPassword = password ? await bcrypt.hash(password, 5) : candidate.password;
+
+        // Обновление данных администратора
+        const updatedUser = await candidate.update({
+            email: email || candidate.email,
+            password: hashedPassword,
+            lastname: lastname || candidate.lastname,
+            firstname: firstname || candidate.firstname,
+            middlename: middlename || candidate.middlename,
+        });
+
+        // Форматируем ответ
+        const user = {
+            id_user: updatedUser.id_user,
+            email: updatedUser.email,
+            lastname: updatedUser.lastname,
+            firstname: updatedUser.firstname,
+            middlename: updatedUser.middlename,
+        };
+        // Генерация JWT токена
+        const token = generateJwt(updatedUser.id_user, updatedUser.email, updatedUser.role_name);
+
+        // Возвращаем обновлённую запись в ответе
+        return res.json({ 
+            token, 
+            user 
+        });
+    }
 }
 
 module.exports = new AuthController();

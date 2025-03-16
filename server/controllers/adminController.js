@@ -74,7 +74,7 @@ class AdminController {
 
         // Поиск администратора по id_admin из токена
         const candidate = await Admin.findOne({
-            where: { id_admin: req.admin.id_admin }
+            where: { id_admin: req.user.id }
         });
 
         // Проверка, является ли email защищённым (например, email суперадмина)
@@ -124,7 +124,7 @@ class AdminController {
 
     async checkAdmin(req, res, next) {
         // Генерация нового токена для проверки авторизации
-        const token = generateJwt(req.admin.id_admin, req.admin.email, "admin");
+        const token = generateJwt(req.user.id, req.user.email, "admin");
         return res.json({ token });
     }
 }
