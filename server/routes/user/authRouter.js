@@ -6,5 +6,6 @@ const authMiddleware = require('../../middleware/authMiddleware')
 router.post('/registration', authController.registration)
 router.post('/login', authController.login)
 router.get('/check', authMiddleware, authController.check)
+router.post('/editSelfFromToken', authMiddleware, authController.editSelfFromToken)
 
 module.exports = router

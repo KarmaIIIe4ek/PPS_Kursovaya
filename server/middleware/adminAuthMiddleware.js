@@ -14,7 +14,7 @@ module.exports = async function (req, res, next) {
 
         // Проверяем токен
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
-        req.admin = decoded;
+        req.user = decoded;
 
         // Проверяем, является ли пользователь администратором
         if (decoded.role !== "admin") {
