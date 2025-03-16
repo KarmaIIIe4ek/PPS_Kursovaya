@@ -1,5 +1,5 @@
 const { group } = require('console');
-const {Group, User, UsersInGroup} = require('../models/models')
+const {Group, User, UsersInGroup, TaskForGroup, Task} = require('../models/models')
 const crypto = require('crypto')
 
 class GroupController {
@@ -67,6 +67,45 @@ class GroupController {
         }
     }
 
+    async deleteById(req, res, next) {
+        const { id_group } = req.body;
+    
+        try {
+            // Проверка наличия group_number в запросе
+            if (!id_group) {
+                return res.status(400).json({ message: "id_group обязателен для удаления группы" });
+            }
+            
+            // Поиск группы по id_group
+            const group = await Group.findOne({ where: { 
+                id_group: id_group,
+                id_user: req.user.id
+            } });
+
+            if (!group) {
+                return res.status(400).json({ message: "Группа не найдена" });
+            }
+
+            await UsersInGroup.destroy({where: {
+                id_group: group.id_group
+
+            }})
+
+            await TaskForGroup.destroy({where: {
+                id_group: group.id_group
+            }})
+
+            group.destroy()
+    
+            return res.json({
+                message: "Группа успешно удалена",
+            });
+        } catch (e) {
+            console.error('Ошибка при удалении группы:', e);
+            return res.status(500).json({ message: "Произошла ошибка при удалении группы" });
+        }
+    }
+
     async getAllMyGroups(req, res, next) {
         try {
             // Получаем все группы, созданные пользователем
@@ -96,11 +135,31 @@ class GroupController {
                     firstname: user.user.firstname,
                     middlename: user.user.middlename
                 }));
+
+                const tasks = await TaskForGroup.findAll({
+                    where: { 
+                        id_group: group.id_group,
+                        is_open: true
+                     },
+                    include: [
+                        {
+                            model: Task,
+                        }
+                    ]
+                });
+    
+                // Форматируем данные о Заданиях
+                const tasksData = tasks.map(task => ({
+                    id_task: task.task.id_task,
+                    task_name: task.task.task_name,
+                    description: task.task.description
+                }));
     
                 // Возвращаем данные о группе с пользователями
                 return {
                     group_number: group.group_number,
                     hash_code_login: group.hash_code_login,
+                    tasks: tasksData,
                     users: usersData
                 };
             }));
@@ -167,7 +226,118 @@ class GroupController {
             return res.status(500).json({ message: "Ошибка при добавлении в группу" });
         }
     }
+
+    async grantRightsToGroup (req, res, next) {
+        const { id_task, hash_code_login, deadline } = req.body;
     
+        try {
+            // Проверка наличия id_task в запросе
+            if (!id_task) {
+                return res.status(400).json({ message: "id_task обязателен для выдачи прав" });
+            }
+             // Проверка наличия hash_code_login в запросе
+             if (!hash_code_login) {
+                return res.status(400).json({ message: "hash_code_login обязателен для выдачи прав" });
+            }
+            
+            // Поиск задания по id
+            const task = await Task.findOne({ where: { id_task } });
+                
+            if (!task) {
+                return res.status(404).json({ message: "Задание с таким id не найдено" });
+            }
+
+            // Поиск группы по хеш-коду
+            const group = await Group.findOne({ where: { 
+                hash_code_login: hash_code_login,
+                id_user: req.user.id
+            } });
+
+            if (!group) {
+                return res.status(404).json({ message: "Группа не найдена" });
+            }
+
+            const tasks_for_group = await TaskForGroup.findOne({
+                where: {
+                    id_task: task.id_task,
+                    id_group: group.id_group,
+                }
+            });
+
+            if (tasks_for_group) {
+                return res.status(404).json({ message: "Права уже были выданы" });
+            }
+
+            // Поиск группы по хеш-коду
+            const task_for_group = await TaskForGroup.create({
+                is_open: false,
+                deadline: deadline || null,
+                id_task: task.id_task,
+                id_group: group.id_group,
+                createdAt: new Date(), // Sequelize автоматически добавляет это поле, но можно указать вручную
+                updatedAt: new Date() // Sequelize автоматически добавляет это поле, но можно указать вручную
+            });
+    
+            return res.json({
+                message: "Группе успешно выданы права на задание"
+            });
+        } catch (e) {
+            console.error('Ошибка при выдаче прав группе на задание:', e);
+            return res.status(500).json({ message: "Ошибка при выдаче прав группе на задание" });
+        }
+    }
+    
+    async changeIsOpenById(req, res, next) {
+        const { id_task, hash_code_login } = req.body;
+    
+        try {
+            // Проверка наличия id_task в запросе
+            if (!id_task) {
+                return res.status(400).json({ message: "id_task обязателен" });
+            }
+
+            // Проверка наличия hash_code_login в запросе
+            if (!hash_code_login) {
+                return res.status(400).json({ message: "hash_code_login обязателен" });
+            }
+
+            // Поиск задания по id_task
+            const task = await Task.findOne({ where: { id_task } });
+    
+            if (!task) {
+                return res.status(404).json({ message: "Задание с таким id не найдено" });
+            }
+
+            // Поиск группы по hash_code_login
+            const group = await Group.findOne({ where: { hash_code_login } });
+    
+            if (!group) {
+                return res.status(404).json({ message: "Группа с таким hash_code_login не найдена" });
+            }
+
+            const task_for_group = await TaskForGroup.findOne({ where: { 
+                id_group: group.id_group,
+                id_task: task.id_task
+             } });
+    
+            if (!task_for_group) {
+                return res.status(404).json({ message: "Выданные права с такими данными не найдены" });
+            }
+
+            task_for_group.update({
+                is_open: !task_for_group.is_open
+            })
+            if (task_for_group.is_open === false) {
+                return res.json({ message: "Выполнение задания группой больше недоступно" });
+            } else {
+                return res.json({ message: "Выполнение задания группой теперь доступно" });
+            }
+            
+        } catch (e) {
+            console.error('Ошибка при изменении доступности выполнении задания группой:', e);
+            return res.status(500).json({ message: "Произошла ошибка при изменении доступности выполнении задания группой" });
+        }
+    }
 }
 
 module.exports = new GroupController()
