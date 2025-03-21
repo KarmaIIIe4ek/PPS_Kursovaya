@@ -1,6 +1,7 @@
 const { group } = require('console');
-const {Group, User, UsersInGroup, TaskForGroup, Task} = require('../models/models')
+const {Group, User, UsersInGroup, TaskForGroup, Task, Purchase} = require('../models/models')
 const crypto = require('crypto')
+const { Op } = require('sequelize'); // Импортируем Op из Sequelize
 
 class GroupController {
     async create(req, res, next) {
@@ -258,6 +259,18 @@ class GroupController {
                 return res.status(404).json({ message: "Группа не найдена" });
             }
 
+            // Поиск группы по хеш-коду
+            const purchase = await Purchase.findOne({ where: { 
+                id_user: req.user.id,
+                payment_date: {
+                    [Op.ne]: null // Выбираем только строки, где payment_date не равно NULL
+                }
+            } });
+
+            if (!purchase) {
+                return res.status(404).json({ message: "У вас не оплачена услуга" });
+            }
+
             const tasks_for_group = await TaskForGroup.findOne({
                 where: {
                     id_task: task.id_task,
@@ -314,6 +327,18 @@ class GroupController {
     
             if (!group) {
                 return res.status(404).json({ message: "Группа с таким hash_code_login не найдена" });
+            }
+
+            // Поиск группы по хеш-коду
+            const purchase = await Purchase.findOne({ where: { 
+                id_user: req.user.id,
+                payment_date: {
+                    [Op.ne]: null // Выбираем только строки, где payment_date не равно NULL
+                }
+            } });
+
+            if (!purchase) {
+                return res.status(404).json({ message: "У вас не оплачена услуга" });
             }
 
             const task_for_group = await TaskForGroup.findOne({ where: { 

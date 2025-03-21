@@ -69,7 +69,9 @@ class TaskController {
     async getAll(req, res, next) {
         try {
             // Получаем все записи
-            const Tasks = await Task.findAll();
+            const Tasks = await Task.findAll({
+                order: [['id_task', 'ASC']]
+            });
     
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedTasks = Tasks.map(task => {
@@ -87,6 +89,32 @@ class TaskController {
             return res.status(500).json({ message: "Произошла ошибка при получении списка заданий" });
         }
     }
+
+    async getAllAvailable(req, res, next) {
+        try {
+            // Получаем все записи
+            const Tasks = await Task.findAll({
+                where: {is_available: true},
+                order: [['id_task', 'ASC']]
+            });
+            
+            // Форматируем ответ, чтобы включить только нужные данные
+            const formattedTasks = Tasks.map(task => {
+                return {
+                    id_task: task.id_task,
+                    is_available: task.is_available,
+                    task_name: task.task_name,
+                    description: task.description
+                };
+            });
+    
+            return res.json(formattedTasks);
+        } catch (e) {
+            console.error('Ошибка при получении данных из списка доступных заданий:', e);
+            return res.status(500).json({ message: "Произошла ошибка при получении списка доступных заданий" });
+        }
+    }
+
 }
 
 module.exports = new TaskController()
