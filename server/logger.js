@@ -105,7 +105,8 @@ morgan.token('response-body', (req) => {
     return req.responseBody || ''; // Возвращаем строку, если это не объект
 });
 
-const customFormat = ':method :url :status :response-time ms\nHost: :host-port\nHeaders: :headers\nRequest Body: :request-body\nResponse Body: :response-body\n';
+// Кастомный формат для morgan с IP-адресом
+const customFormat = ':remote-addr :method :url :status :response-time ms\nHost: :host-port\nHeaders: :headers\nRequest Body: :request-body\nResponse Body: :response-body\n';
 
 // Настройка Morgan для записи HTTP-логов в файл
 const accessLogStream = fs.createWriteStream(path.join(logDirectory, 'access.log'), { flags: 'a' });
