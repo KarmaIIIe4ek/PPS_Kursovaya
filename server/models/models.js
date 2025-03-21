@@ -50,6 +50,8 @@ Admin.afterSync(async () => {
 
 const Support = sequelize.define('support', {
     id_support: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_admin: { type: DataTypes.INTEGER, allowNull: false },
+    id_user: { type: DataTypes.INTEGER },
     user_text: { type: DataTypes.TEXT },
     status: { type: DataTypes.STRING },
     admin_response: { type: DataTypes.TEXT }
@@ -63,6 +65,7 @@ User.hasMany(Support, { foreignKey: 'id_user' });
 
 const Blacklist = sequelize.define('blacklist', {
     id_blacklist: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_user: { type: DataTypes.INTEGER, allowNull: false },
     reason: { type: DataTypes.TEXT }
 });
 
@@ -73,7 +76,8 @@ User.hasMany(Blacklist, { foreignKey: 'id_user' });
 const Group = sequelize.define('group', {
     id_group: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     group_number: { type: DataTypes.STRING, allowNull: false },
-    hash_code_login: { type: DataTypes.STRING, allowNull: false }
+    hash_code_login: { type: DataTypes.STRING, allowNull: false },
+    id_user: { type: DataTypes.INTEGER, allowNull: false },
 });
 
 // Связь с User
@@ -81,7 +85,9 @@ Group.belongsTo(User, { foreignKey: 'id_user' });
 User.hasMany(Group, { foreignKey: 'id_user' });
 
 const UsersInGroup = sequelize.define('users_in_group', {
-    id_users_group: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true }
+    id_users_group: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_user: { type: DataTypes.INTEGER, allowNull: false },
+    id_group: { type: DataTypes.INTEGER, allowNull: false },
 });
 
 // Связь с User и Group
@@ -99,6 +105,8 @@ const Task = sequelize.define('task', {
 
 const TaskForGroup = sequelize.define('task_for_group', {
     id_task_for_group: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_group: { type: DataTypes.INTEGER, allowNull: false },
+    id_task: { type: DataTypes.INTEGER, allowNull: false },
     is_open: { type: DataTypes.BOOLEAN, allowNull: false },
     deadline: { type: DataTypes.DATE }
 });
@@ -111,6 +119,8 @@ Task.hasMany(TaskForGroup, { foreignKey: 'id_task' });
 
 const UserMakeTask = sequelize.define('user_make_task', {
     id_result: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_user: { type: DataTypes.INTEGER, allowNull: false },
+    id_task: { type: DataTypes.INTEGER, allowNull: false },
     score: { type: DataTypes.INTEGER },
     comment_user: { type: DataTypes.TEXT },
     comment_teacher: { type: DataTypes.TEXT },
@@ -126,6 +136,21 @@ UserMakeTask.belongsTo(Task, { foreignKey: 'id_task' });
 User.hasMany(UserMakeTask, { foreignKey: 'id_user' });
 Task.hasMany(UserMakeTask, { foreignKey: 'id_task' });
 
+const Purchase = sequelize.define('purchase', {
+    id_purchase: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id_user: { type: DataTypes.INTEGER, allowNull: false },
+    price: { type: DataTypes.INTEGER, allowNull: false },
+    is_paid: { type: DataTypes.BOOLEAN, defaultValue: false },
+    payment_method: { type: DataTypes.STRING },
+    created_date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    payment_date: { type: DataTypes.DATE },
+    id_blocked: { type: DataTypes.BOOLEAN, defaultValue: false }
+});
+
+// Связь с User и Task
+Purchase.belongsTo(User, { foreignKey: 'id_user' });
+User.hasMany(Purchase, { foreignKey: 'id_user' });
+
 module.exports = {
     User,
     Admin,
@@ -135,5 +160,6 @@ module.exports = {
     UsersInGroup,
     Task,
     TaskForGroup,
-    UserMakeTask
+    UserMakeTask,
+    Purchase
 };
