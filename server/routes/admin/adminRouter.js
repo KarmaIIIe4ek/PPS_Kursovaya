@@ -28,5 +28,7 @@ router.post('/task/add', adminAuthMiddleware, taskController.add)
 router.post('/task/changeAvailableById', adminAuthMiddleware, taskController.changeAvailableById)
 
 router.get('/purchase/getAll', adminAuthMiddleware, purchaseController.getAll)
+router.post('/purchase/changeIsPaidById', adminAuthMiddleware, purchaseController.changeIsPaidById)
+router.post('/purchase/changeIsBlockedById', adminAuthMiddleware, purchaseController.changeIsBlockedById)
 
 module.exports = router

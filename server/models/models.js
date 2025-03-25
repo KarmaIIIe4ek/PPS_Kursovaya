@@ -144,7 +144,7 @@ const Purchase = sequelize.define('purchase', {
     payment_method: { type: DataTypes.STRING },
     created_date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     payment_date: { type: DataTypes.DATE },
-    id_blocked: { type: DataTypes.BOOLEAN, defaultValue: false }
+    is_blocked: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 // Связь с User и Task
