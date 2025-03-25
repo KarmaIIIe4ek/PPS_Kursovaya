@@ -38,7 +38,7 @@ class PurchaseController {
     }
 
     async confirm(req, res, next) {
-        const { id_purchase, is_paid } = req.body;
+        const { id_purchase } = req.body;
     
         try {
             // Проверка наличия id_purchase в запросе
@@ -65,6 +65,67 @@ class PurchaseController {
         }
     }
 
+    async changeIsPaidById(req, res, next) {
+        const { id_purchase } = req.body;
+    
+        try {
+            // Проверка наличия id_purchase в запросе
+            if (!id_purchase) {
+                return res.status(400).json({ message: "id_purchase обязателен" });
+            }
+            // Поиск задания по id_task
+            const purchase = await Purchase.findOne({ where: { id_purchase } });
+    
+            if (!purchase) {
+                return res.status(404).json({ message: "Заявка с таким id не найдена" });
+            }
+
+            purchase.update({
+                is_paid: !purchase.is_paid
+            })
+            if (purchase.is_paid) {
+                return res.json({ message: "Статус изменён на 'Оплачено'" });
+            } else {
+                return res.json({ message: "Статус изменён на 'Не оплачено'" });
+            }
+            
+        } catch (e) {
+            console.error('Ошибка при изменении статуса оплаты:', e);
+            return res.status(500).json({ message: "Произошла ошибка при изменении статуса оплаты" });
+        }
+    }
+
+    async changeIsBlockedById(req, res, next) {
+        const { id_purchase } = req.body;
+    
+        try {
+            // Проверка наличия id_purchase в запросе
+            if (!id_purchase) {
+                return res.status(400).json({ message: "id_purchase обязателен" });
+            }
+            // Поиск
+            const purchase = await Purchase.findOne({ where: { id_purchase } });
+    
+            if (!purchase) {
+                return res.status(404).json({ message: "Заявка с таким id не найдена" });
+            }
+
+            purchase.update({
+                is_blocked: !purchase.is_blocked
+            })
+
+            if (purchase.is_blocked) {
+                return res.json({ message: "Статус изменён на 'Заблокирован'" });
+            } else {
+                return res.json({ message: "Статус изменён на 'Разблокирован'" });
+            }
+            
+        } catch (e) {
+            console.error('Ошибка при изменении статуса блокировки оплаты:', e);
+            return res.status(500).json({ message: "Произошла ошибка при изменении статуса блокировки оплаты" });
+        }
+    }
+
     async getAll(req, res, next) {
         try {
             // Получаем все записи
@@ -75,13 +136,13 @@ class PurchaseController {
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedPurchases = purchases.map(purchase => {
                 return {
-                    id_purchase: purchase.id_task,
+                    id_purchase: purchase.id_purchase,
                     id_user: purchase.id_user,
                     price: purchase.price,
                     is_paid: purchase.is_paid,
                     payment_method: purchase.payment_method,
                     created_date: purchase.created_date,
-                    is_blocked: purchase.is_blocked || null,
+                    is_blocked: purchase.is_blocked,
                 };
             });
     
@@ -109,7 +170,7 @@ class PurchaseController {
                     is_paid: purchase.is_paid,
                     payment_method: purchase.payment_method,
                     created_date: purchase.created_date,
-                    is_blocked: purchase.is_blocked || null,
+                    is_blocked: purchase.is_blocked,
                 };
             });
     
