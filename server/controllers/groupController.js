@@ -229,6 +229,155 @@ class GroupController {
         }
     }
 
+    async removeFromGroupByEmail(req, res, next) {
+        const { email, hash_code_login } = req.body;
+    
+        try {
+             // Проверка наличия hash_code_login в запросе
+             if (!hash_code_login) {
+                return res.status(400).json({ message: "hash_code_login обязателен для удаления из группы" });
+            }
+
+            // Проверка наличия email в запросе
+            if (!email) {
+                return res.status(400).json({ message: "email обязателен для удаления из группы" });
+            }
+
+            // Поиск пользователя по email
+            const user = await User.findOne({ where: { email } });
+                
+            if (!user) {
+                return res.status(404).json({ message: "Пользователь с таким email не найден" });
+            }
+
+            // Поиск группы по хеш-коду
+            const group = await Group.findOne({ where: { 
+                hash_code_login: hash_code_login,
+            } });
+
+            if (!group) {
+                return res.status(404).json({ message: "Группа не найдена" });
+            }
+
+            // Поиск группы по хеш-коду
+            const user_was_in_group = await UsersInGroup.findOne({ where: { 
+                id_group: group.id_group,
+                id_user: user.id_user
+            } });
+
+            if (!user_was_in_group) {
+                return res.status(404).json({ message: "Пользователь не находится в этой группе" });
+            }
+
+            user_was_in_group.destroy();
+    
+            return res.json({
+                message: "Пользователь успешно удален из группы"
+            });
+        } catch (e) {
+            console.error('Ошибка при удалении из группы:', e);
+            return res.status(500).json({ message: "Ошибка при удалении из группы" });
+        }
+    }
+
+    async addSelfToGroup(req, res, next) {
+        const { hash_code_login } = req.body;
+    
+        try {
+             // Проверка наличия hash_code_login в запросе
+             if (!hash_code_login) {
+                return res.status(400).json({ message: "hash_code_login обязателен для добавления в группу" });
+            }
+            
+            // Поиск пользователя по email
+            const user = await User.findOne({ where: { id_user: req.user.id } });
+                
+            if (!user) {
+                return res.status(404).json({ message: "Пользователь с таким email не найден" });
+            }
+
+            // Поиск группы по хеш-коду
+            const group = await Group.findOne({ where: { 
+                hash_code_login: hash_code_login,
+            } });
+
+            if (!group) {
+                return res.status(404).json({ message: "Группа не найдена" });
+            }
+
+            // Поиск группы по хеш-коду
+            const user_was_in_group = await UsersInGroup.findOne({ where: { 
+                id_group: group.id_group,
+                id_user: user.id_user
+            } });
+
+            if (user_was_in_group) {
+                return res.status(404).json({ message: "Вы уже находитесь в этой группе" });
+            }
+
+            // Добавление пользователя в группу
+            const user_in_group = await UsersInGroup.create({
+                id_user: user.id_user,
+                id_group: group.id_group,
+                createdAt: new Date(), // Sequelize автоматически добавляет это поле, но можно указать вручную
+                updatedAt: new Date(), // Sequelize автоматически добавляет это поле, но можно указать вручную
+            });
+    
+            return res.json({
+                message: "Пользователь успешно добавлен в группу"
+            });
+        } catch (e) {
+            console.error('Ошибка при добавлении в группу:', e);
+            return res.status(500).json({ message: "Ошибка при добавлении в группу" });
+        }
+    }
+
+    async removeSelfFromGroup(req, res, next) {
+        const { hash_code_login } = req.body;
+    
+        try {
+             // Проверка наличия hash_code_login в запросе
+             if (!hash_code_login) {
+                return res.status(400).json({ message: "hash_code_login обязателен для удаления из группы" });
+            }
+            
+            // Поиск пользователя по email
+            const user = await User.findOne({ where: { id_user: req.user.id } });
+                
+            if (!user) {
+                return res.status(404).json({ message: "Пользователь с таким email не найден" });
+            }
+
+            // Поиск группы по хеш-коду
+            const group = await Group.findOne({ where: { 
+                hash_code_login: hash_code_login,
+            } });
+
+            if (!group) {
+                return res.status(404).json({ message: "Группа не найдена" });
+            }
+
+            // Поиск группы по хеш-коду
+            const user_was_in_group = await UsersInGroup.findOne({ where: { 
+                id_group: group.id_group,
+                id_user: user.id_user
+            } });
+
+            if (!user_was_in_group) {
+                return res.status(404).json({ message: "Вы не находитесь в этой группе" });
+            }
+
+            user_was_in_group.destroy();
+    
+            return res.json({
+                message: "Вы успешно удалены из группы"
+            });
+        } catch (e) {
+            console.error('Ошибка при удалении из группы:', e);
+            return res.status(500).json({ message: "Ошибка при удалении из группы" });
+        }
+    }
+
     async grantRightsToGroup (req, res, next) {
         const { id_task, hash_code_login, deadline } = req.body;
     
@@ -262,13 +411,15 @@ class GroupController {
             // Поиск группы по хеш-коду
             const purchase = await Purchase.findOne({ where: { 
                 id_user: req.user.id,
-                payment_date: {
-                    [Op.ne]: null // Выбираем только строки, где payment_date не равно NULL
-                }
+                is_paid: true,
             } });
 
             if (!purchase) {
                 return res.status(404).json({ message: "У вас не оплачена услуга" });
+            }
+
+            if (purchase.is_blocked) {
+                return res.status(404).json({ message: "Услуги для вас заблокированы администратором" });
             }
 
             const tasks_for_group = await TaskForGroup.findOne({
@@ -329,16 +480,18 @@ class GroupController {
                 return res.status(404).json({ message: "Группа с таким hash_code_login не найдена" });
             }
 
-            // Поиск группы по хеш-коду
+            // Поиск оплаты пользователя
             const purchase = await Purchase.findOne({ where: { 
                 id_user: req.user.id,
-                payment_date: {
-                    [Op.ne]: null // Выбираем только строки, где payment_date не равно NULL
-                }
+                is_paid: true,
             } });
 
             if (!purchase) {
                 return res.status(404).json({ message: "У вас не оплачена услуга" });
+            }
+
+            if (purchase.is_blocked) {
+                return res.status(404).json({ message: "Услуги для вас заблокированы администратором" });
             }
 
             const task_for_group = await TaskForGroup.findOne({ where: { 

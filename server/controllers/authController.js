@@ -1,23 +1,19 @@
 const bcrypt = require('bcrypt');
-const { User, Group } = require('../models/models');
+const { User } = require('../models/models');
 
 const generateJwt = require('../utils/jwtGenerate')
 
 class AuthController {
     async registration(req, res, next) {
-        const { lastname, firstname, middlename, role_name, group, email, password } = req.body;
+        const { lastname, firstname, middlename, role_name, email, password } = req.body;
 
         // Проверка наличия email и password
         if (!email || !password) {
             return res.status(400).json({ message: 'Некорректный email или password' });
         }
 
-        // Проверка существования группы, если она указана
-        if (group) {
-            const existingGroup = await Group.findOne({ where: { id_group: group } });
-            if (!existingGroup) {
-                return res.status(400).json({ message: 'Группа с таким ID не существует' });
-            }
+        if (role_name !== 'student' && role_name !== 'teacher') {
+            return res.status(400).json({ message: 'Некорректная роль' });
         }
 
         // Проверка, существует ли пользователь с таким email
@@ -75,7 +71,7 @@ class AuthController {
 
     async check(req, res, next) {
         // Генерация нового токена для проверки авторизации
-        const token = generateJwt(req.user.id_user, req.user.email, req.user.role_name);
+        const token = generateJwt(req.user.id, req.user.email, req.user.role_name);
         return res.json({ token });
     }
 
