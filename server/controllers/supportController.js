@@ -10,7 +10,7 @@ class SupportController {
                 return res.status(400).json({ message: "Отсутсвует описание!" });
             }
 
-            const user = await User.findOne({where: {id_user: req.user.id_user}})
+            const user = await User.findOne({where: {id_user: req.user.id}})
             if (!user) {
                 return res.status(404).json({message: "Пользователь не найден"})
             }
@@ -60,7 +60,7 @@ class SupportController {
     async getListMyAppeal(req, res, next) {
         try {
             // Получаем все записи из support
-            const supportEntries = await Support.findAll({where: { id_user: req.user.id_user } });
+            const supportEntries = await Support.findAll({where: { id_user: req.user.id } });
     
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedSupport = supportEntries.map(entry => {

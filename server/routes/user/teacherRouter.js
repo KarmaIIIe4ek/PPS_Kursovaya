@@ -10,6 +10,7 @@ router.post('/group/create', authMiddleware, checkRoleMiddleware('teacher'), gro
 router.post('/group/deleteById', authMiddleware, checkRoleMiddleware('teacher'), groupController.deleteById)
 router.get('/group/getAllMyGroups', authMiddleware, checkRoleMiddleware('teacher'), groupController.getAllMyGroups)
 router.post('/group/addUserToGroup', authMiddleware, checkRoleMiddleware('teacher'), groupController.addUserToGroup)
+router.post('/group/removeFromGroupByEmail', authMiddleware, checkRoleMiddleware('teacher'), groupController.removeFromGroupByEmail)
 router.post('/group/grantRightsToGroup', authMiddleware, checkRoleMiddleware('teacher'), groupController.grantRightsToGroup)
 router.post('/group/changeIsOpenById', authMiddleware, checkRoleMiddleware('teacher'), groupController.changeIsOpenById)
 router.get('/group/getAllMyAccess', authMiddleware, checkRoleMiddleware('teacher'), groupController.getAllMyAccess)
