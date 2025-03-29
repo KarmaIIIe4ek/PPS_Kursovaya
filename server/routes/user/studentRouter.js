@@ -8,6 +8,9 @@ router.post('/group/addSelfToGroup', authMiddleware, groupController.addSelfToGr
 router.post('/group/removeSelfFromGroup', authMiddleware, groupController.removeSelfFromGroup)
 
 router.get('/task/getUserGroupsWithTasks', authMiddleware, studentController.getUserGroupsWithTasks)
+router.get('/task/getTasksWithGroups', authMiddleware, studentController.getTasksWithGroups)
+router.get('/task/getUserTaskAttempts', authMiddleware, studentController.getUserTaskAttempts)
 router.post('/task/createUserTaskAttempt', authMiddleware, studentController.createUserTaskAttempt)
+router.post('/task/finishUserTaskAttempt', authMiddleware, studentController.finishUserTaskAttempt)
 
 module.exports = router
