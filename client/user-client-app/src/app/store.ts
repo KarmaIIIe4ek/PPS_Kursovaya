@@ -1,17 +1,29 @@
-import type { Action, ThunkAction } from "@reduxjs/toolkit"
+import type { ThunkAction, Action } from "@reduxjs/toolkit";
 import { configureStore } from "@reduxjs/toolkit"
+import { api } from "./services/api"
+import auth from "../features/user/userSlice"
+import { listenerMiddleware } from "../middleware/auth"
+import { initAuth } from "../middleware/initAuth";
 
 export const store = configureStore({
-  reducer: {},
+  reducer: {
+    [api.reducerPath]: api.reducer,
+    auth,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      .concat(api.middleware)
+      .prepend(listenerMiddleware.middleware),
 })
+// Инициализация аутентификации после создания store
+initAuth(store)
 
-// Infer the type of `store`
-export type AppStore = typeof store
+export type AppDispatch = typeof store.dispatch
 export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = AppStore["dispatch"]
-export type AppThunk<ThunkReturnType = void> = ThunkAction<
-  ThunkReturnType,
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
   RootState,
   unknown,
-  Action
+  Action<string>
 >
+

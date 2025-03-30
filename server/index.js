@@ -50,8 +50,8 @@ appUser.use(morganMiddleware);
 appAdmin.use(morganMiddleware);
 
 // Подключение роутов
-appUser.use('/', userRoutes);
-appAdmin.use('/', adminRoutes);
+appUser.use('/api', userRoutes);
+appAdmin.use('/api', adminRoutes);
 
 const startUserServer = async () => {
     try {
