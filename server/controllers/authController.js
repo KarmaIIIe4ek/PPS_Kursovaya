@@ -120,6 +120,55 @@ class AuthController {
             user 
         });
     }
+
+    async getInfoAboutSelf(req, res, next) {
+        try {
+            // Проверка, существует ли пользователь с таким id
+            const user = await User.findOne({ 
+                where: { id_user: req.user.id },
+                attributes: [
+                    'id_user',
+                    'email',
+                    'lastname',
+                    'firstname',
+                    'middlename',
+                    'role_name',
+                    'last_login',
+                    'is_blocked',
+                    'is_deleted',
+                    'createdAt',
+                    'updatedAt'
+                ],
+                raw: true // Чтобы получить plain object вместо модели
+            });
+    
+            if (!user) {
+                return res.status(400).json({ message: 'Пользователь с таким id не найден' });
+            }
+    
+            // Формируем ответ без пароля и с нужными полями
+            const userData = {
+                id_user: user.id_user,
+                email: user.email,
+                lastname: user.lastname,
+                firstname: user.firstname,
+                middlename: user.middlename,
+                role_name: user.role_name,
+                last_login: user.last_login,
+                is_blocked: user.is_blocked,
+                is_deleted: user.is_deleted,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            };
+    
+            // Возвращаем данные пользователя
+            return res.json(userData);
+    
+        } catch (error) {
+            console.error('Ошибка при получении информации о пользователе:', error);
+            return res.status(500).json({ message: 'Произошла ошибка при получении информации' });
+        }
+    }
 }
 
 module.exports = new AuthController();
