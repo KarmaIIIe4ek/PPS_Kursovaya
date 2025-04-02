@@ -50,7 +50,7 @@ Admin.afterSync(async () => {
 
 const Support = sequelize.define('support', {
     id_support: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    id_admin: { type: DataTypes.INTEGER, allowNull: false },
+    id_admin: { type: DataTypes.INTEGER},
     id_user: { type: DataTypes.INTEGER },
     user_text: { type: DataTypes.TEXT },
     status: { type: DataTypes.STRING },

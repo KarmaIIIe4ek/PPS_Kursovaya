@@ -6,7 +6,7 @@ import { Outlet } from 'react-router-dom'
 
 export const Layout = () => {
   return (
-    <>
+    <React.Fragment>
         <Header />
         <Container>
             <div className="flex-2">
@@ -16,6 +16,6 @@ export const Layout = () => {
                 <Outlet/>
             </div>
         </Container>
-    </>
+    </React.Fragment>
   )
 }

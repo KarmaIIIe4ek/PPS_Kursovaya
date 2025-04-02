@@ -12,6 +12,8 @@ import { Auth } from "./pages/auth"
 import { Main } from "./pages/main"
 import { AuthGuard } from "./features/user/authGuard"
 import { Group } from "./pages/groups"
+import { Support } from "./pages/support"
+import { ModifyGroup } from "./pages/modufy-group"
 
 const router = createBrowserRouter([
   {
@@ -28,12 +30,20 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <Main />, // Защищенная главная страница
+        element: <Main />, 
       },
       {
-        path: "groups",
-        element: <Group />, // Защищенная главная страница
+        path: "myGroup",
+        element: <Group />, 
       },
+      {
+        path: "modifyGroup",
+        element: <ModifyGroup />, 
+      },
+      {
+        path: "support",
+        element: <Support />, 
+      }
       // другие защищенные маршруты
     ],
   },
