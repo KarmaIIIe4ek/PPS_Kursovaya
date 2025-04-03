@@ -552,32 +552,35 @@ class GroupController {
                         ],
                     }
                 ],
-                order: [['group_number']]
             });
-    
             // Форматируем ответ
-        const formattedGroups = groups.map(group => {
-            return {
-                id_group: group.id_group,
-                group_number: group.group_number,
-                hash_code_login: group.hash_code_login,
-                id_user: group.id_user,
-                createdAt: group.createdAt,
-                tasks: group.task_for_groups.map(taskForGroup => ({
-                    id_task_for_group: taskForGroup.id_task_for_group,
-                    is_open: taskForGroup.is_open,
-                    deadline: taskForGroup.deadline,
-                    task: {
-                        id_task: taskForGroup.task.id_task,
-                        is_available: taskForGroup.task.is_available,
-                        task_name: taskForGroup.task.task_name,
-                        description: taskForGroup.task.description
-                    }
-                }))
-            };
-        });
+            const formattedGroups = groups.map(group => {
+                // Сортируем task_for_groups по id_task_for_group перед маппингом
+                const sortedTasks = group.task_for_groups
+                    ? [...group.task_for_groups].sort((a, b) => a.id_task_for_group - b.id_task_for_group)
+                    : [];
+            
+                return {
+                    id_group: group.id_group,
+                    group_number: group.group_number,
+                    hash_code_login: group.hash_code_login,
+                    id_user: group.id_user,
+                    createdAt: group.createdAt,
+                    tasks: sortedTasks.map(taskForGroup => ({
+                        id_task_for_group: taskForGroup.id_task_for_group,
+                        is_open: taskForGroup.is_open,
+                        deadline: taskForGroup.deadline,
+                        task: {
+                            id_task: taskForGroup.task.id_task,
+                            is_available: taskForGroup.task.is_available,
+                            task_name: taskForGroup.task.task_name,
+                            description: taskForGroup.task.description
+                        }
+                    }))
+                };
+            });
 
-        return res.json(formattedGroups);
+            return res.json(formattedGroups);
             
         } catch (e) {
             console.error('Ошибка при получении списка групп с выданными им правами:', e);
