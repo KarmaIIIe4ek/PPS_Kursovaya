@@ -14,6 +14,7 @@ import { AuthGuard } from "./features/user/authGuard"
 import { Group } from "./pages/groups"
 import { Support } from "./pages/support"
 import { ModifyGroup } from "./pages/modufy-group"
+import { PurchasePage } from "./pages/purchase"
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "support",
         element: <Support />, 
+      },
+      {
+        path: "purchase",
+        element: <PurchasePage />, 
       }
       // другие защищенные маршруты
     ],

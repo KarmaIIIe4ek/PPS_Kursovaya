@@ -62,3 +62,14 @@ export type Task = {
   task_name: string
   description: string
 }
+
+export type Purchase = {
+  id_purchase: number
+  id_user: number
+  price: number
+  is_paid: boolean
+  payment_method: string
+  created_date: Date
+  is_blocked: boolean
+  payment_date: Date
+}

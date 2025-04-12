@@ -1,7 +1,6 @@
-import React from 'react'
 import { NavButton } from '../nav-button'
-import { BsMailbox, BsMailboxFlag, BsPostcard } from 'react-icons/bs'
-import { FiBarChart, FiHome, FiMail, FiUsers } from 'react-icons/fi'
+import { FiHome, FiMail, FiUsers } from 'react-icons/fi'
+import { MdCurrencyRuble } from 'react-icons/md'
 
 export const NavBar = () => {
   return (
@@ -25,6 +24,11 @@ export const NavBar = () => {
         <li className="w-full">
           <NavButton href='/modifyGroup' icon={<FiUsers />} className="w-full justify-start">
             Управление группами
+          </NavButton>
+        </li>
+        <li className="w-full">
+          <NavButton href='/purchase' icon={<MdCurrencyRuble   />} className="w-full justify-start">
+            Подписка
           </NavButton>
         </li>
       </ul>

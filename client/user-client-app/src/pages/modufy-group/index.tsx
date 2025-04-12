@@ -245,7 +245,7 @@ export const ModifyGroup = () => {
   ];
 
   const renderUserItem = (user: any) => (
-    <div key={user.id_user} className="flex items-center gap-3 py-2 px-4 border-gray-500">
+    <div key={user.id_user} className="flex items-center gap-3 py-2 px-4 ">
       <Avatar name={`${user.lastname} ${user.firstname}`} size="sm" />
       <div>
         <p className="font-medium">{user.lastname} {user.firstname} {user.middlename}</p>
@@ -258,8 +258,8 @@ export const ModifyGroup = () => {
   );
 
   const renderTaskItem = (task: any, group: any, isAccessGroup?: boolean) => (
-    <div className='border-gray-500 '>
-        <div key={isAccessGroup ? task.id_task_for_group : task.id_task} className="flex items-center gap-3 pt-2 px-4 border-gray-500">
+    <div >
+        <div key={isAccessGroup ? task.id_task_for_group : task.id_task} className="flex items-center gap-3 pt-2 px-4">
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
             <FiBookOpen size={16} />
           </div>
@@ -602,7 +602,7 @@ export const ModifyGroup = () => {
                             <FiUsers size={16} /> Участники ({group.users.length})
                           </h3>
                           {group.users.length > 0 ? (
-                            <div className="border rounded-lg divide-y border-gray-500">
+                            <div className="border rounded-lg divide-y ">
                               {group.users.map(renderUserItem)}
                             </div>
                           ) : (
@@ -610,18 +610,18 @@ export const ModifyGroup = () => {
                           )}
                         </div>
                       <div>
-                        <h3 className="font-medium mb-2 flex items-center gap-2">
-                          <FiBookOpen size={16} /> Доступные задания ({group.tasks.length})
+                        <h3 className="font-medium mb-2 flex items-center gap-2 ">
+                          <FiBookOpen size={16} /> Доступные задания
                         </h3>
                         {group.tasks.length > 0 ? (
-                          <div className="border rounded-lg divide-y">
+                          <div className="border rounded-lg divide-y ">
                             {group.tasks.map(task => renderTaskItemWithoutStatus(task))}
                           </div>
                         ) : (
                           <p className=" text-sm">Нет доступных заданий</p>
                         )}
                       </div>
-                      <div></div>
+ 
                     </div>
                   </div>
                 </AccordionItem>
