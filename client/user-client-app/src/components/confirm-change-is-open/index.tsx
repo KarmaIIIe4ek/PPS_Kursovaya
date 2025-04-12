@@ -58,7 +58,7 @@ export const ConfirmChangeIsOpen = ({
                 color="primary" 
                 onPress={handleSubmit}
               >
-                Удалить
+                Подтвердить
               </Button>
             </ModalFooter>
           </>

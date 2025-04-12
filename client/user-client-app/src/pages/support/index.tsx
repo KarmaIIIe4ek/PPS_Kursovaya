@@ -156,7 +156,7 @@ export const Support = () => {
               {appeals?.map((appeal: SupportType) => (
                 <div key={appeal.id_support}>
                   <div className="flex justify-between mb-2">
-                    <h3 className="font-medium text-lg text-secondary">
+                    <h3 className="font-medium text-lg text-primary">
                       Обращение #{appeal.id_support}
                     </h3>
                     {renderStatusBadge(appeal.status)}
@@ -164,7 +164,7 @@ export const Support = () => {
                   <p className=" mb-3 whitespace-pre-line">
                     Текст обращения:
                   </p>
-                  <p className="text-gray-500 mb-3 whitespace-pre-line">
+                  <p className="whitespace-pre-line mb-3 whitespace-pre-line">
                     {appeal.user_text}
                   </p>
                   
@@ -175,7 +175,7 @@ export const Support = () => {
                         <p className="text-sm font-semibold text-primary mb-2">
                           Ответ поддержки:
                         </p>
-                        <p className="text-gray-500 whitespace-pre-line">
+                        <p className="whitespace-pre-line whitespace-pre-line">
                           {appeal.admin_response}
                         </p>
                       </div>
