@@ -1,6 +1,6 @@
 import { NavButton } from '../nav-button'
 import { FiHome, FiMail, FiUsers } from 'react-icons/fi'
-import { MdCurrencyRuble } from 'react-icons/md'
+import { MdCurrencyRuble, MdOutlineAnalytics } from 'react-icons/md'
 
 export const NavBar = () => {
   return (
@@ -29,6 +29,11 @@ export const NavBar = () => {
         <li className="w-full">
           <NavButton href='/purchase' icon={<MdCurrencyRuble   />} className="w-full justify-start">
             Подписка
+          </NavButton>
+        </li>
+        <li className="w-full">
+          <NavButton href='/results' icon={<MdOutlineAnalytics    />} className="w-full justify-start">
+            Результаты
           </NavButton>
         </li>
       </ul>

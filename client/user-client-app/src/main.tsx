@@ -11,15 +11,21 @@ import { Layout } from "./components/layout"
 import { Auth } from "./pages/auth"
 import { Main } from "./pages/main"
 import { AuthGuard } from "./features/user/authGuard"
-import { Group } from "./pages/groups"
+import { GroupPage } from "./pages/groups"
 import { Support } from "./pages/support"
 import { ModifyGroup } from "./pages/modufy-group"
 import { PurchasePage } from "./pages/purchase"
+import { ResultsPage } from "./pages/results"
+import { HomePage } from "./pages/home"
 
 const router = createBrowserRouter([
   {
     path: "/auth",
     element: <Auth />, // Страница авторизации
+  },
+  {
+    path: "/main",
+    element: <Main/>
   },
   {
     path: "/",
@@ -31,11 +37,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <Main />, 
+        element: <HomePage />, 
       },
       {
         path: "myGroup",
-        element: <Group />, 
+        element: <GroupPage />, 
       },
       {
         path: "modifyGroup",
@@ -48,7 +54,12 @@ const router = createBrowserRouter([
       {
         path: "purchase",
         element: <PurchasePage />, 
-      }
+      },
+      {
+        path: "results",
+        element: <ResultsPage />, 
+      },
+
       // другие защищенные маршруты
     ],
   },

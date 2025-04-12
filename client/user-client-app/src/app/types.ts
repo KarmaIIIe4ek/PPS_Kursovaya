@@ -73,3 +73,61 @@ export type Purchase = {
   is_blocked: boolean
   payment_date: Date
 }
+
+export type GroupWithTasksAndAttempts = {
+  id_group: number
+  group_number: string
+  hash_code_login: string
+  createdAt: Date
+  available_tasks: AvailableTask[]
+  users_attempts: UserAttempts[]
+}
+
+export type AvailableTask = {
+  id_task: number
+  task_name: string
+  description: string
+  is_open: boolean
+  deadline: Date | null
+}
+
+export type UserAttempts = {
+  id_user: number
+  user_name: string
+  attempts: Attempt[]
+}
+
+export type Attempt = {
+  id_result: number
+  task: TaskInAttempt
+  score: number | null
+  comment_user: string | null
+  comment_teacher: string | null
+  date_start: Date
+  date_finish: Date | null
+  status: 'completed' | 'in_progress' | string // Можно уточнить возможные статусы
+}
+
+export type TaskInAttempt = {
+  id_task: number
+  is_available: boolean
+  task_name: string
+  description: string
+}
+
+export type GroupMember = Pick<User, 
+  'id_user' | 'email' | 'lastname' | 'firstname' | 'middlename' | 'role_name'
+>;
+
+export type GroupCreator = Pick<User, 
+  'id_user' | 'email' | 'lastname' | 'firstname' | 'middlename'
+>;
+
+export type GroupWithMembers = {
+  id_group: number;
+  group_number: string;
+  hash_code_login: string;
+  created_at: Date | string; // Можно уточнить в зависимости от формата
+  creator: GroupCreator;
+  members: GroupMember[];
+};

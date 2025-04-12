@@ -587,6 +587,74 @@ class GroupController {
             return res.status(500).json({ message: "Произошла ошибка при получении списка групп с выданными им правами" });
         }
     }
+
+    async getGroupsWhereIAmMember(req, res, next) {
+        try {
+            // Получаем все группы, в которых состоит текущий пользователь
+            const userGroups = await UsersInGroup.findAll({
+                where: { id_user: req.user.id },
+                include: [
+                    {
+                        model: Group,
+                        include: [
+                            {
+                                model: User,
+                                as: 'user', // Используем стандартный алиас, если не задавали свой
+                                attributes: ['id_user', 'email', 'lastname', 'firstname', 'middlename']
+                            },
+                            {
+                                model: UsersInGroup,
+                                include: [
+                                    {
+                                        model: User,
+                                        attributes: ['id_user', 'email', 'lastname', 'firstname', 'middlename', 'role_name']
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                order: [
+                    [Group, 'createdAt', 'DESC']
+                ]
+            });
+    
+            // Форматируем ответ
+            const formattedGroups = userGroups.map(userGroup => {
+                const group = userGroup.group;
+                
+                // Форматируем данные участников
+                const membersData = group.users_in_groups.map(member => ({
+                    id_user: member.user.id_user,
+                    email: member.user.email,
+                    lastname: member.user.lastname,
+                    firstname: member.user.firstname,
+                    middlename: member.user.middlename,
+                    role_name: member.user.role_name
+                }));
+    
+                return {
+                    id_group: group.id_group,
+                    group_number: group.group_number,
+                    hash_code_login: group.hash_code_login,
+                    created_at: group.createdAt,
+                    creator: {
+                        id_user: group.user.id_user,
+                        email: group.user.email,
+                        lastname: group.user.lastname,
+                        firstname: group.user.firstname,
+                        middlename: group.user.middlename
+                    },
+                    members: membersData
+                };
+            });
+    
+            return res.json(formattedGroups);
+        } catch (e) {
+            console.error('Ошибка при получении списка групп, где пользователь является участником:', e);
+            return res.status(500).json({ message: "Произошла ошибка при получении списка групп, где пользователь является участником" });
+        }
+    }
 }
 
 module.exports = new GroupController()
