@@ -5,6 +5,7 @@ const checkRoleMiddleware = require('../../middleware/checkRoleMiddleware')
 const groupController = require('../../controllers/groupController')
 const taskController = require('../../controllers/taskController')
 const purchaseController = require('../../controllers/purchaseController')
+const studentController = require('../../controllers/studentController')
 
 router.post('/group/create', authMiddleware, checkRoleMiddleware('teacher'), groupController.create)
 router.post('/group/deleteById', authMiddleware, checkRoleMiddleware('teacher'), groupController.deleteById)
@@ -14,6 +15,7 @@ router.post('/group/removeFromGroupByEmail', authMiddleware, checkRoleMiddleware
 router.post('/group/grantRightsToGroup', authMiddleware, checkRoleMiddleware('teacher'), groupController.grantRightsToGroup)
 router.post('/group/changeIsOpenById', authMiddleware, checkRoleMiddleware('teacher'), groupController.changeIsOpenById)
 router.get('/group/getAllMyAccess', authMiddleware, checkRoleMiddleware('teacher'), groupController.getAllMyAccess)
+router.get('/group/getGroupAttempts', authMiddleware, checkRoleMiddleware('teacher'), studentController.getGroupAttempts);
 
 router.get('/tasks/getAllAvailable', authMiddleware, checkRoleMiddleware('teacher'), taskController.getAllAvailable)
 

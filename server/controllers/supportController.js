@@ -46,7 +46,8 @@ class SupportController {
                     id_admin: entry.id_admin,
                     user_text: entry.user_text,
                     status: entry.status,
-                    admin_response: entry.admin_response || null
+                    admin_response: entry.admin_response || null,
+                    createdAt: entry.createdAt
                 };
             });
     
@@ -60,7 +61,8 @@ class SupportController {
     async getListMyAppeal(req, res, next) {
         try {
             // Получаем все записи из support
-            const supportEntries = await Support.findAll({where: { id_user: req.user.id } });
+            const supportEntries = await Support.findAll({where: { id_user: req.user.id },
+            order: ['id_support']});
     
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedSupport = supportEntries.map(entry => {
@@ -70,7 +72,8 @@ class SupportController {
                     id_admin: entry.id_admin,
                     user_text: entry.user_text,
                     status: entry.status,
-                    admin_response: entry.admin_response || null
+                    admin_response: entry.admin_response || null,
+                    createdAt: entry.createdAt
                 };
             });
     
@@ -104,7 +107,8 @@ class SupportController {
                 id_admin: updatedSupport.id_admin,
                 user_text: updatedSupport.user_text,
                 status: updatedSupport.status,
-                admin_response: updatedSupport.admin_response || null
+                admin_response: updatedSupport.admin_response || null,
+                createdAt: updatedSupport.createdAt
             };
             
             return res.json(formattedSupport);

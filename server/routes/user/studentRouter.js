@@ -6,6 +6,7 @@ const studentController = require('../../controllers/studentController')
 
 router.post('/group/addSelfToGroup', authMiddleware, groupController.addSelfToGroup)
 router.post('/group/removeSelfFromGroup', authMiddleware, groupController.removeSelfFromGroup)
+router.get('/group/getGroupsWhereIAmMember', authMiddleware, groupController.getGroupsWhereIAmMember)
 
 router.get('/task/getUserGroupsWithTasks', authMiddleware, studentController.getUserGroupsWithTasks)
 router.get('/task/getTasksWithGroups', authMiddleware, studentController.getTasksWithGroups)

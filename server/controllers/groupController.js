@@ -59,8 +59,6 @@ class GroupController {
     
             return res.json({
                 message: "Группа успешно создана",
-                group_number: newGroup.group_number,
-                hash_code_login: hash_code_login,
             });
         } catch (e) {
             console.error('Ошибка при добавлении группы:', e);
@@ -87,6 +85,11 @@ class GroupController {
                 return res.status(400).json({ message: "Группа не найдена" });
             }
 
+            if (req.user.id !== group.id_user) {
+                return res.status(404).json({ message: "Вы не можете удалить чужую группу" });
+            }
+
+
             await UsersInGroup.destroy({where: {
                 id_group: group.id_group
 
@@ -112,7 +115,7 @@ class GroupController {
             // Получаем все группы, созданные пользователем
             const groups = await Group.findAll({
                 where: { id_user: req.user.id },
-                attributes: ['id_group', 'group_number', 'hash_code_login']
+                attributes: ['id_group', 'group_number', 'hash_code_login', 'id_user', 'createdAt']
             });
     
             // Для каждой группы получаем список пользователей
@@ -123,9 +126,10 @@ class GroupController {
                     include: [
                         {
                             model: User,
-                            attributes: ['id_user', 'email', 'lastname', 'firstname', 'middlename']
+                            order: [['lastname']]
                         }
-                    ]
+                    ],
+                    
                 });
                 
                 // Форматируем данные о пользователях
@@ -134,33 +138,43 @@ class GroupController {
                     email: user.user.email,
                     lastname: user.user.lastname,
                     firstname: user.user.firstname,
-                    middlename: user.user.middlename
+                    middlename: user.user.middlename,
+                    role_name: user.user.role_name,
+                    last_login: user.user.last_login,
+                    is_blocked: user.user.is_blocked,
+                    is_deleted: user.user.is_deleted,
+                    createdAt: user.user.createdAt,
+                    updatedAt: user.user.updatedAt
                 }));
 
                 const tasks = await TaskForGroup.findAll({
                     where: { 
                         id_group: group.id_group,
-                        is_open: true
                      },
                     include: [
                         {
                             model: Task,
                         }
-                    ]
+                    ],
+                    order: [['id_task']]
                 });
                 
                 
                 // Форматируем данные о Заданиях
                 const tasksData = tasks.map(task => ({
                     id_task: task.task.id_task,
+                    is_available: task.task.is_available,
                     task_name: task.task.task_name,
                     description: task.task.description
                 }));
     
                 // Возвращаем данные о группе с пользователями
                 return {
+                    id_group: group.id_group,
                     group_number: group.group_number,
                     hash_code_login: group.hash_code_login,
+                    id_user: group.id_user,
+                    createdAt: group.createdAt,
                     tasks: tasksData,
                     users: usersData
                 };
@@ -257,6 +271,10 @@ class GroupController {
 
             if (!group) {
                 return res.status(404).json({ message: "Группа не найдена" });
+            }
+
+            if (user.id_user === group.id_user) {
+                return res.status(404).json({ message: "Вы не можете удалить себя из своей группы" });
             }
 
             // Поиск группы по хеш-коду
@@ -528,39 +546,113 @@ class GroupController {
                     {
                         model: TaskForGroup,
                         include: [
-                            {
-                            model: Task
-                        }
-                    ]
+                                {
+                                model: Task,
+                            }
+                        ],
                     }
-                ]
+                ],
             });
-    
             // Форматируем ответ
-        const formattedGroups = groups.map(group => {
-            return {
-                group_number: group.group_number,
-                hash_code_login: group.hash_code_login,
-                tasks: group.task_for_groups.map(taskForGroup => ({
-                    id_task_for_group: taskForGroup.id_task_for_group,
-                    is_open: taskForGroup.is_open,
-                    deadline: taskForGroup.deadline,
-                    task: {
-                        id_task: taskForGroup.task.id_task,
-                        task_name: taskForGroup.task.task_name,
-                        description: taskForGroup.task.description
-                    }
-                }))
-            };
-        });
+            const formattedGroups = groups.map(group => {
+                // Сортируем task_for_groups по id_task_for_group перед маппингом
+                const sortedTasks = group.task_for_groups
+                    ? [...group.task_for_groups].sort((a, b) => a.id_task_for_group - b.id_task_for_group)
+                    : [];
+            
+                return {
+                    id_group: group.id_group,
+                    group_number: group.group_number,
+                    hash_code_login: group.hash_code_login,
+                    id_user: group.id_user,
+                    createdAt: group.createdAt,
+                    tasks: sortedTasks.map(taskForGroup => ({
+                        id_task_for_group: taskForGroup.id_task_for_group,
+                        is_open: taskForGroup.is_open,
+                        deadline: taskForGroup.deadline,
+                        task: {
+                            id_task: taskForGroup.task.id_task,
+                            is_available: taskForGroup.task.is_available,
+                            task_name: taskForGroup.task.task_name,
+                            description: taskForGroup.task.description
+                        }
+                    }))
+                };
+            });
 
-        return res.json({
-            formattedGroups
-         });
+            return res.json(formattedGroups);
             
         } catch (e) {
             console.error('Ошибка при получении списка групп с выданными им правами:', e);
             return res.status(500).json({ message: "Произошла ошибка при получении списка групп с выданными им правами" });
+        }
+    }
+
+    async getGroupsWhereIAmMember(req, res, next) {
+        try {
+            // Получаем все группы, в которых состоит текущий пользователь
+            const userGroups = await UsersInGroup.findAll({
+                where: { id_user: req.user.id },
+                include: [
+                    {
+                        model: Group,
+                        include: [
+                            {
+                                model: User,
+                                as: 'user', // Используем стандартный алиас, если не задавали свой
+                                attributes: ['id_user', 'email', 'lastname', 'firstname', 'middlename']
+                            },
+                            {
+                                model: UsersInGroup,
+                                include: [
+                                    {
+                                        model: User,
+                                        attributes: ['id_user', 'email', 'lastname', 'firstname', 'middlename', 'role_name']
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                order: [
+                    [Group, 'createdAt', 'DESC']
+                ]
+            });
+    
+            // Форматируем ответ
+            const formattedGroups = userGroups.map(userGroup => {
+                const group = userGroup.group;
+                
+                // Форматируем данные участников
+                const membersData = group.users_in_groups.map(member => ({
+                    id_user: member.user.id_user,
+                    email: member.user.email,
+                    lastname: member.user.lastname,
+                    firstname: member.user.firstname,
+                    middlename: member.user.middlename,
+                    role_name: member.user.role_name
+                }));
+    
+                return {
+                    id_group: group.id_group,
+                    group_number: group.group_number,
+                    hash_code_login: group.hash_code_login,
+                    created_at: group.createdAt,
+                    creator: {
+                        id_user: group.user.id_user,
+                        email: group.user.email,
+                        lastname: group.user.lastname,
+                        firstname: group.user.firstname,
+                        middlename: group.user.middlename
+                    },
+                    members: membersData
+                };
+            });
+    
+            return res.json(formattedGroups);
+        } catch (e) {
+            console.error('Ошибка при получении списка групп, где пользователь является участником:', e);
+            return res.status(500).json({ message: "Произошла ошибка при получении списка групп, где пользователь является участником" });
         }
     }
 }

@@ -1,4 +1,5 @@
 const {Purchase} = require('../models/models')
+const { Op } = require('sequelize');
 
 class PurchaseController {
     async add(req, res, next) {
@@ -13,6 +14,33 @@ class PurchaseController {
             // Проверка наличия payment_method в запросе
             if (!payment_method) {
                 return res.status(400).json({ message: "payment_method обязателен" });
+            }
+
+            const availablePurchase = await Purchase.findOne({
+                where: {is_paid: true,
+                    id_user: req.user.id
+                }
+            })
+            
+            // Проверка наличия активной подписки
+            if (availablePurchase) {
+                return res.status(400).json({ message: "У вас уже есть активная подписка" });
+            }
+
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000); // Текущее время минус 1 час
+
+            const createdPurchase = await Purchase.findOne({
+                where: {
+                    created_date: {
+                        [Op.gt]: oneHourAgo // Ищем дату, которая меньше (раньше) чем oneHourAgo
+                    },
+                    id_user: req.user.id
+                }
+            });
+            
+            // Проверка наличия созданной ранее заявки подписки
+            if (createdPurchase) {
+                return res.status(400).json({ message: "У вас уже есть активная заявка на оплату, созданная менее часа назад" });
             }
     
             // Создание записи в черном списке
@@ -29,7 +57,6 @@ class PurchaseController {
     
             return res.json({
                 message: "Заявка создана",
-                id_purchase: purchase.id_purchase
             });
         } catch (e) {
             console.error('Ошибка при создании заявки на оплату:', e);
@@ -143,6 +170,7 @@ class PurchaseController {
                     payment_method: purchase.payment_method,
                     created_date: purchase.created_date,
                     is_blocked: purchase.is_blocked,
+                    payment_date: purchase.payment_date,
                 };
             });
     
@@ -164,13 +192,14 @@ class PurchaseController {
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedPurchases = purchases.map(purchase => {
                 return {
-                    id_purchase: purchase.id_task,
+                    id_purchase: purchase.id_purchase,
                     id_user: purchase.id_user,
                     price: purchase.price,
                     is_paid: purchase.is_paid,
                     payment_method: purchase.payment_method,
                     created_date: purchase.created_date,
                     is_blocked: purchase.is_blocked,
+                    payment_date: purchase.payment_date,
                 };
             });
     
