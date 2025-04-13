@@ -12,6 +12,11 @@ export type User = {
   updatedAt: Date
 }
 
+export type TokenWithUser = {
+  token: string
+  user: User
+}
+
 export type Support = {
   id_support: number
   id_user: number

@@ -110,6 +110,12 @@ class AuthController {
             lastname: updatedUser.lastname,
             firstname: updatedUser.firstname,
             middlename: updatedUser.middlename,
+            role_name: updatedUser.role_name,
+            last_login: updatedUser.last_login,
+            is_blocked: updatedUser.is_blocked,
+            is_deleted: updatedUser.is_deleted,
+            createdAt: updatedUser.createdAt,
+            updatedAt: updatedUser.updatedAt
         };
         // Генерация JWT токена
         const token = generateJwt(updatedUser.id_user, updatedUser.email, updatedUser.role_name);

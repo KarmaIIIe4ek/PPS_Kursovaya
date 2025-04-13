@@ -86,6 +86,24 @@ const slice = createSlice({
           isAuthenticated: state.isAuthenticated
         }))
       })
+      .addMatcher(userApi.endpoints.editSelfFromToken.matchFulfilled, (state, action) => {
+        // Обновляем текущего пользователя и токен (если он был изменен)
+        if (action.payload.token) {
+          state.token = action.payload.token;
+        }
+        if (action.payload.user) {
+          state.current = action.payload.user;
+        }
+        state.isAuthenticated = true;
+        
+        // Сохраняем обновленные данные в localStorage
+        localStorage.setItem('authState', JSON.stringify({
+          current: state.current,
+          isAuthenticated: state.isAuthenticated
+        }));
+                // Сохраняем обновленные данные в localStorage
+        localStorage.setItem('token', state.token);
+      })
   },
 })
 

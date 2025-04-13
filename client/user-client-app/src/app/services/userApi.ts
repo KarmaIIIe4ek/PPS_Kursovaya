@@ -30,6 +30,22 @@ export const userApi = api.injectEndpoints({
                 body: userData
             })
         }),
+        editSelfFromToken: builder.mutation<
+            {token: string},
+            {
+                email: string,
+                password: string,
+                lastname: string,
+                firstname: string,
+                middlename: string,
+            }
+        > ({
+            query: (userData) => ({
+                url: '/auth/editSelfFromToken',
+                method: 'POST',
+                body: userData
+            })
+        }),
         getInfoAboutSelf: builder.query<User, void>({
             query: () => ({
                 url: '/auth/getInfoAboutSelf',
@@ -43,9 +59,10 @@ export const {
     useRegisterMutation,
     useLoginMutation,
     useGetInfoAboutSelfQuery,
-    useLazyGetInfoAboutSelfQuery
+    useLazyGetInfoAboutSelfQuery,
+    useEditSelfFromTokenMutation
 } = userApi;
 
 export const {
-    endpoints: { login, register, getInfoAboutSelf },
+    endpoints: { login, register, getInfoAboutSelf, editSelfFromToken },
   } = userApi
