@@ -17,11 +17,14 @@ import { ModifyGroup } from "./pages/modufy-group"
 import { PurchasePage } from "./pages/purchase"
 import { ResultsPage } from "./pages/results"
 import { HomePage } from "./pages/home"
+import { SelfResultsPage } from "./pages/self-results"
+import { TeacherGuard } from "./features/user/roleGuard"
+import { MakeTask } from "./pages/makeTask"
 
 const router = createBrowserRouter([
   {
     path: "/auth",
-    element: <Auth />, // Страница авторизации
+    element: <Auth />,
   },
   {
     path: "/main",
@@ -36,7 +39,7 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "",
+        path: "profile",
         element: <HomePage />, 
       },
       {
@@ -44,23 +47,43 @@ const router = createBrowserRouter([
         element: <GroupPage />, 
       },
       {
-        path: "modifyGroup",
-        element: <ModifyGroup />, 
+        path: "selfResults",
+        element: <SelfResultsPage />, 
       },
       {
         path: "support",
         element: <Support />, 
       },
       {
+        path: "makeTask",
+        element: <MakeTask />, 
+      },
+      
+      // Teacher-only routes
+      {
         path: "purchase",
-        element: <PurchasePage />, 
+        element: (
+          <TeacherGuard>
+            <PurchasePage />
+          </TeacherGuard>
+        ), 
       },
       {
         path: "results",
-        element: <ResultsPage />, 
+        element: (
+          <TeacherGuard>
+            <ResultsPage />
+          </TeacherGuard>
+        ), 
       },
-
-      // другие защищенные маршруты
+      {
+        path: "modifyGroup",
+        element: (
+          <TeacherGuard>
+            <ModifyGroup />
+          </TeacherGuard>
+        ), 
+      },
     ],
   },
 ])

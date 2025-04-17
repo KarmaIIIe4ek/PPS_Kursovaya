@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Card,
   CardHeader,
   CardBody,
   Spinner,
-  Badge,
   Divider,
   Input,
   Table,

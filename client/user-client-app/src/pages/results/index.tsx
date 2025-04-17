@@ -17,7 +17,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Tooltip
+  Tooltip,
+  Chip,
+  Avatar
 } from '@heroui/react';
 import { 
   useLazyGetGroupAttemptsQuery 
@@ -31,7 +33,8 @@ import {
   FiCheckCircle,
   FiClock,
   FiAlertCircle,
-  FiInfo
+  FiInfo,
+  FiPlus
 } from 'react-icons/fi';
 import { EmptyState } from '../../components/empty-state';
 import { ErrorModal } from '../../components/error-modal';
@@ -77,21 +80,43 @@ export const ResultsPage = () => {
     switch(status) {
       case 'completed':
         return (
-          <div color="success" className="flex items-center gap-1 color-success" >
-            <FiCheckCircle /> Завершено
-          </div>
+          <Chip 
+            color="success" 
+            startContent={<FiCheckCircle className="text-current" />}
+            variant="flat"
+          >
+            Завершено
+          </Chip>
         );
       case 'in_progress':
         return (
-          <div color="warning" className="flex items-center gap-1">
-            <FiClock /> В процессе
-          </div>
+          <Chip
+            color="warning"
+            startContent={<FiClock className="text-current" />}
+            variant="flat"
+          >
+            В процессе
+          </Chip>
+        );
+      case 'not_started':
+        return (
+          <Chip
+            color="default"
+            startContent={<FiPlus className="text-current" />}
+            variant="flat"
+          >
+            Не начато
+          </Chip>
         );
       default:
         return (
-          <div color="danger" className="flex items-center gap-1">
-            <FiAlertCircle /> Ошибка
-          </div>
+          <Chip
+            color="danger"
+            startContent={<FiAlertCircle className="text-current" />}
+            variant="flat"
+          >
+            Ошибка
+          </Chip>
         );
     }
   };
@@ -133,8 +158,15 @@ export const ResultsPage = () => {
               </Select>
               
               {selectedGroup && (
-                <div className="text-default-600 text-sm">
-                  Студентов в группе: {groups?.find(g => g.hash_code_login === selectedGroup)?.users.length || 0}
+                <div className="flex items-center gap-4">
+                  <Badge 
+                    content={groups?.find(g => g.hash_code_login === selectedGroup)?.users.length || 0}
+                    color="primary"
+                    shape="circle"
+                    size="lg"
+                  >
+                    <span className="ml-2">Студентов</span>
+                  </Badge>
                 </div>
               )}
             </div>
@@ -149,9 +181,16 @@ export const ResultsPage = () => {
               <h2 className="text-xl font-semibold">
                 Результаты группы: {groups?.find(g => g.hash_code_login === selectedGroup)?.group_number}
               </h2>
-              <h2 color="primary">
-                Заданий доступно: {groupResults?.available_tasks.length || 0}
-              </h2>
+              <div className="flex gap-4">
+                <Badge 
+                  content={groupResults?.available_tasks.length || 0}
+                  color="primary"
+                  shape="circle"
+                  size="lg"
+                >
+                  <span className="ml-2">Заданий</span>
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardBody>
@@ -182,23 +221,59 @@ export const ResultsPage = () => {
                         <TableColumn>Студент</TableColumn>
                         <TableColumn>Попыток</TableColumn>
                         <TableColumn>Завершено</TableColumn>
+                        <TableColumn>В процессе</TableColumn>
+                        <TableColumn>Не начато</TableColumn>
                         <TableColumn>Действия</TableColumn>
                       </TableHeader>
                       <TableBody>
-                        {groupResults?.users_attempts.map((user) => (
-                          <TableRow key={user.id_user}>
-                            <TableCell>{user.user_name}</TableCell>
-                            <TableCell>{user.attempts.length}</TableCell>
-                            <TableCell>
-                              {user.attempts.filter(a => a.status === 'completed').length}
-                            </TableCell>
-                            <TableCell>
-                              <Button size="sm" color="primary">
-                                Подробнее
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {groupResults?.users_attempts.map((user) => {
+                          const completedCount = user.attempts.filter(a => a.status === 'completed').length;
+                          const inProgressCount = user.attempts.filter(a => a.status === 'in_progress').length;
+                          const notStartedCount = groupResults.available_tasks.length - completedCount - inProgressCount;
+                          
+                          return (
+                            <TableRow key={user.id_user}>
+                              <TableCell>{user.user_name}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={user.attempts.length} 
+                                  color="primary" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={completedCount} 
+                                  color="success" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={inProgressCount} 
+                                  color="warning" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={notStartedCount > 0 ? notStartedCount : 0} 
+                                  color="default" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button size="sm" color="primary">
+                                  Подробнее
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -210,6 +285,8 @@ export const ResultsPage = () => {
                         <TableColumn>Задание</TableColumn>
                         <TableColumn>Попыток</TableColumn>
                         <TableColumn>Завершено</TableColumn>
+                        <TableColumn>В процессе</TableColumn>
+                        <TableColumn>Не начато</TableColumn>
                         <TableColumn>Средний балл</TableColumn>
                       </TableHeader>
                       <TableBody>
@@ -218,8 +295,9 @@ export const ResultsPage = () => {
                             .flatMap(user => user.attempts)
                             .filter(attempt => attempt.task.id_task === task.id_task);
                           
-                          const completedAttempts = taskAttempts
-                            .filter(a => a.status === 'completed');
+                          const completedAttempts = taskAttempts.filter(a => a.status === 'completed');
+                          const inProgressAttempts = taskAttempts.filter(a => a.status === 'in_progress');
+                          const notStartedCount = groupResults.users_attempts.length - completedAttempts.length - inProgressAttempts.length;
                           
                           const totalScore = completedAttempts.reduce((sum, a) => sum + (a.score || 0), 0);
                           const avgScore = completedAttempts.length > 0 ? totalScore / completedAttempts.length : 0;
@@ -230,11 +308,48 @@ export const ResultsPage = () => {
                                 <div className="font-medium">{task.task_name}</div>
                                 <div className="text-default-500 text-sm">{task.description}</div>
                               </TableCell>
-                              <TableCell>{taskAttempts.length}</TableCell>
-                              <TableCell>{completedAttempts.length}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={taskAttempts.length} 
+                                  color="primary" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={completedAttempts.length} 
+                                  color="success" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={inProgressAttempts.length} 
+                                  color="warning" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={notStartedCount > 0 ? notStartedCount : 0} 
+                                  color="default" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
                               <TableCell>
                                 {completedAttempts.length > 0 
-                                  ? avgScore.toFixed(1) 
+                                  ? (
+                                    <Badge 
+                                      content={avgScore.toFixed(1)} 
+                                      color="secondary" 
+                                      shape="circle" 
+                                      size="lg"
+                                    />
+                                  )
                                   : 'Нет данных'}
                               </TableCell>
                             </TableRow>
@@ -271,9 +386,16 @@ export const ResultsPage = () => {
                                   </TableCell>
                                   <TableCell>{getStatusBadge(attempt.status)}</TableCell>
                                   <TableCell>
-                                    {attempt.score ?? (
+                                    {attempt.score ? (
+                                      <Badge 
+                                        content={attempt.score} 
+                                        color="success" 
+                                        shape="circle" 
+                                        size="lg"
+                                      />
+                                    ) : (
                                       <Tooltip content="Ожидает проверки">
-                                        <FiInfo className="text-default-400" />
+                                        <span><FiInfo className="text-default-400" /></span>
                                       </Tooltip>
                                     )}
                                   </TableCell>

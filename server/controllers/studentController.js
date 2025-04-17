@@ -77,16 +77,13 @@ class StudentController {
                                         required: true // Только группы, где есть текущий пользователь
                                     }
                                 ],
-                                attributes: ['group_number', 'hash_code_login']
                             }
                         ],
-                        attributes: ['is_open', 'deadline']
                     }
                 ],
                 where: {
                     is_available: true // Только доступные задания
                 },
-                attributes: ['id_task', 'task_name', 'description', 'is_available']
             });
     
             // Преобразуем результат в нужный формат
@@ -100,16 +97,13 @@ class StudentController {
                         return {
                             group_number: taskForGroup.group.group_number,
                             hash_code_login: taskForGroup.group.hash_code_login,
-                            is_open: taskForGroup.is_open,
-                            deadline: taskForGroup.deadline
+                            is_open: taskForGroup.is_open
                         };
                     })
                 };
             });
     
-            return res.json({
-                result
-            });
+            return res.json(result);
         } catch (e) {
             console.error('Ошибка при получении списка заданий с группами:', e);
             return res.status(500).json({ 
@@ -192,9 +186,7 @@ class StudentController {
                 };
             });
     
-            return res.status(200).json({
-                attempts: result
-            });
+            return res.status(200).json(result);
     
         } catch (error) {
             console.error('Ошибка при получении попыток пользователя:', error);
@@ -459,6 +451,149 @@ class StudentController {
             console.error('Ошибка при получении попыток группы:', error);
             return res.status(500).json({ 
                 error: 'Произошла ошибка при получении попыток группы' 
+            });
+        }
+    }
+
+    async getSelfAttempts(req, res) {
+        const id_user = req.user.id;
+    
+        try {
+            // 1. Получаем все группы пользователя и связанные с ними задания
+            const userGroups = await UsersInGroup.findAll({
+                where: { id_user },
+                include: [{
+                    model: Group,
+                    attributes: ['id_group', 'group_number', 'hash_code_login', 'createdAt'],
+                    include: [{
+                        model: TaskForGroup,
+                        where: { is_open: true },
+                        attributes: ['id_task_for_group', 'is_open', 'deadline'],
+                        include: [{
+                            model: Task,
+                            where: { is_available: true },
+                            attributes: ['id_task', 'is_available', 'task_name', 'description']
+                        }]
+                    }]
+                }]
+            });
+    
+            // 2. Получаем все уникальные доступные задания для пользователя
+            const availableTasks = [];
+            const taskGroupsMap = new Map();
+    
+            userGroups.forEach(userGroup => {
+                // Проверяем, что группа и task_for_groups существуют
+                if (!userGroup.group || !userGroup.group.task_for_groups) {
+                    return;
+                }
+    
+                userGroup.group.task_for_groups.forEach(taskForGroup => {
+                    // Проверяем, что задание существует
+                    if (!taskForGroup || !taskForGroup.task) {
+                        return;
+                    }
+    
+                    const taskId = taskForGroup.task.id_task;
+                    
+                    if (!taskGroupsMap.has(taskId)) {
+                        availableTasks.push({
+                            id_task: taskId,
+                            task_name: taskForGroup.task.task_name,
+                            description: taskForGroup.task.description,
+                            is_open: taskForGroup.is_open,
+                            deadline: taskForGroup.deadline
+                        });
+                        
+                        taskGroupsMap.set(taskId, []);
+                    }
+                    
+                    taskGroupsMap.get(taskId).push({
+                        id_group: userGroup.group.id_group,
+                        group_number: userGroup.group.group_number,
+                        hash_code_login: userGroup.group.hash_code_login,
+                        id_user: userGroup.group.id_user,
+                        createdAt: userGroup.group.createdAt
+                    });
+                });
+            });
+    
+            // 3. Получаем все попытки пользователя по доступным заданиям
+            const attempts = await UserMakeTask.findAll({
+                where: { 
+                    id_user,
+                    is_deleted: false,
+                    id_task: availableTasks.map(t => t.id_task)
+                },
+                include: [{
+                    model: Task,
+                    attributes: ['id_task', 'is_available', 'task_name', 'description']
+                }],
+                order: [['date_start', 'DESC']],
+                attributes: [
+                    'id_result', 
+                    'id_task', 
+                    'score', 
+                    'comment_user', 
+                    'comment_teacher', 
+                    'date_start', 
+                    'date_finish'
+                ]
+            });
+    
+            // 4. Формируем результат
+            const result = availableTasks.map(task => {
+                const taskAttempts = attempts
+                    .filter(attempt => attempt && attempt.id_task === task.id_task)
+                    .map(attempt => ({
+                        id_result: attempt.id_result,
+                        task: {
+                            id_task: attempt.task.id_task,
+                            is_available: attempt.task.is_available,
+                            task_name: attempt.task.task_name,
+                            description: attempt.task.description
+                        },
+                        score: attempt.score,
+                        comment_user: attempt.comment_user || null,
+                        comment_teacher: attempt.comment_teacher || null,
+                        date_start: attempt.date_start,
+                        date_finish: attempt.date_finish || null,
+                        status: attempt.date_finish ? 'completed' : 'in_progress'
+                    }));
+    
+                // Определяем статус задания для пользователя
+                let status = 'not_started';
+                if (taskAttempts.length > 0) {
+                    status = taskAttempts.some(a => a.status === 'completed') ? 'completed' : 'in_progress';
+                }
+    
+                const groups = taskGroupsMap.get(task.id_task) || [];
+                
+                return {
+                    task: {
+                        id_task: task.id_task,
+                        is_available: true,
+                        task_name: task.task_name,
+                        description: task.description
+                    },
+                    groups: groups.map(group => ({
+                        id_group: group.id_group,
+                        group_number: group.group_number,
+                        hash_code_login: group.hash_code_login,
+                        id_user: group.id_user,
+                        createdAt: group.createdAt
+                    })),
+                    attempts: taskAttempts,
+                    status: status
+                };
+            });
+    
+            return res.status(200).json(result);
+    
+        } catch (error) {
+            console.error('Ошибка при получении попыток пользователя:', error);
+            return res.status(500).json({ 
+                error: 'Произошла ошибка при получении ваших попыток выполнения заданий' 
             });
         }
     }

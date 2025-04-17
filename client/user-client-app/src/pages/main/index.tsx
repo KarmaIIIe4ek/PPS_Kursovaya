@@ -53,6 +53,7 @@ import {
 import { FaFlask, FaAtom, FaVial } from 'react-icons/fa';
 import { SiReact, SiTypescript, SiNodedotjs, SiPostgresql, SiDocker } from 'react-icons/si';
 import { Button } from '../../components/button';
+import watermark from '../../public/images/watermark.svg'
 
 // Анимационные конфиги
 const container = {
@@ -197,7 +198,7 @@ export const Main = () => {
               variants={slideInFromLeft}
             >
               <Badge color="primary" variant="flat" className="mb-4">
-                <FiStar className="mr-2" /> Новая версия 2.0
+                <FiStar className="mr-2" /> Версия 1.0
               </Badge>
               <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
                 Виртуальная лаборатория для 
@@ -319,9 +320,9 @@ export const Main = () => {
               >
                 <p className="text-5xl font-bold mb-2">{stat.value}</p>
                 <p className="text-lg mb-1">{stat.label}</p>
-                <Badge color="success" variant="flat">
+                <p className='text-green-500 text-lg font-bold'>
                   {stat.change}
-                </Badge>
+                </p>
               </motion.div>
             ))}
           </motion.div>
@@ -632,6 +633,21 @@ export const Main = () => {
           </motion.div>
         </div>
       </footer>
+      <div 
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '20vw', // Регулируйте размер по необходимости
+          height: '20vh',
+          zIndex: 0,
+          opacity: 0.1, // Регулируйте прозрачность здесь
+          backgroundImage: `url(${watermark})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'right bottom',
+          backgroundSize: 'contain'
+        }}
+      />
     </div>
   );
 };

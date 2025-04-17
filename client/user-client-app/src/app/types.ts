@@ -136,3 +136,11 @@ export type GroupWithMembers = {
   creator: GroupCreator;
   members: GroupMember[];
 };
+
+export type UserTaskAttempt = {
+  task: Task;
+  groups: Group[];
+  attempts: Attempt[];
+  status: 'completed' | 'in_progress' | 'not_started';
+};
+
