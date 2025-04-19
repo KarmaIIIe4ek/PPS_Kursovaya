@@ -36,7 +36,7 @@ import { EmptyState } from '../../components/empty-state';
 export const SelfResultsPage = () => {
   const { data: tasksData, isLoading, isError } = useGetSelfAtemptQuery();
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = (dateString: Date | null) => {
     if (!dateString) return 'Не завершено';
     const date = new Date(dateString);
     return date.toLocaleDateString('ru-RU', {
@@ -197,7 +197,7 @@ export const SelfResultsPage = () => {
                       <TableColumn>Задание</TableColumn>
                       <TableColumn>Группы</TableColumn>
                       <TableColumn>Статус</TableColumn>
-                      <TableColumn>Попыток</TableColumn>
+                      <TableColumn>Попыток осталось</TableColumn>
                       <TableColumn>Результат</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -219,7 +219,7 @@ export const SelfResultsPage = () => {
                             <TableCell>{getStatusBadge(taskResult.status)}</TableCell>
                             <TableCell>
                               <Badge 
-                                content={taskResult.attempts.length} 
+                                content={taskResult.attempts.length } 
                                 color="primary" 
                                 shape="circle" 
                                 size="lg"
@@ -232,6 +232,7 @@ export const SelfResultsPage = () => {
                                   color="success" 
                                   shape="circle" 
                                   size="lg"
+                                  
                                 />
                               ) : (
                                 <Tooltip content="Не начато">
@@ -285,7 +286,7 @@ export const SelfResultsPage = () => {
                                 )}
                               </TableCell>
                               <TableCell>
-                                {attempt.comment_teacher || (
+                                {attempt.comment_user || (
                                   <span className="text-default-400">Нет комментария</span>
                                 )}
                               </TableCell>

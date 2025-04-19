@@ -179,10 +179,9 @@ export const Main = () => {
   ];
 
   const experiments = [
-    { name: "Получение солей", complexity: 3, time: "15 мин" },
-    { name: "Реакции разложения", complexity: 4, time: "20 мин" },
-    { name: "Реакции соединения", complexity: 5, time: "25 мин" },
-    { name: "Окислительно-восстановительные", complexity: 5, time: "30 мин" }
+    { name: "Реакции соединения", complexity: 2, time: "15 мин" },
+    { name: "Реакции разложения", complexity: 3, time: "20 мин" },
+    { name: "Реакции обмена", complexity: 5, time: "25 мин" }
   ];
 
   return (

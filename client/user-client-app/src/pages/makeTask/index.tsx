@@ -29,6 +29,7 @@ import {
 import { useGetSelfAtemptQuery } from '../../app/services/resultsApi';
 import { EmptyState } from '../../components/empty-state';
 import { useNavigate } from 'react-router-dom';
+import { useCreateUserTaskAttemptMutation } from '../../app/services/taskApi';
 
 // Анимации
 const container = {
@@ -41,11 +42,6 @@ const container = {
   }
 };
 
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-};
-
 const fadeIn = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: 0.8 } }
@@ -53,6 +49,7 @@ const fadeIn = {
 
 export const MakeTask = () => {
   const { data: tasksData, isLoading, isError } = useGetSelfAtemptQuery();
+  const [createAttempt] = useCreateUserTaskAttemptMutation();
   const [selectedGroup, setSelectedGroup] = React.useState<string>('');
   const navigate = useNavigate();
 
@@ -101,8 +98,20 @@ export const MakeTask = () => {
     }
   };
 
-  const handleStartTask = (taskId: number) => {
-    navigate(`/task/${taskId}`);
+
+  const handleStartTask = async (taskId: number, status: string) => {
+    try {
+      // Для новых заданий отправляем запрос на создание попытки
+      if (status === 'not_started') {
+        await createAttempt({ id_task: taskId }).unwrap();
+      }
+      
+      // Переходим на страницу задания
+      navigate(`/task/${taskId}`);
+    } catch (error) {
+      console.error('Ошибка при создании попытки:', error);
+      // Можно добавить уведомление об ошибке
+    }
   };
 
   const filteredTasks = selectedGroup 
@@ -198,7 +207,7 @@ export const MakeTask = () => {
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           {taskResult.groups.map(group => (
-                            <h2>
+                            <h2 key={group.hash_code_login}>
                               {group.group_number}
                             </h2>
                           ))}
@@ -216,21 +225,22 @@ export const MakeTask = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        {taskResult.status === 'completed' ? <p>Завершено</p> :
-                            <Button
+                        {taskResult.status === 'completed' ? (
+                          <p>Завершено</p>
+                        ) : (
+                          <Button
                             color={
-                            taskResult.status === 'completed' ? 'success' :
-                            taskResult.status === 'in_progress' ? 'warning' : 'primary'
+                              taskResult.status === 'completed' ? 'success' :
+                              taskResult.status === 'in_progress' ? 'warning' : 'primary'
                             }
                             variant="solid"
                             endIcon={<FiArrowRight />}
-                            onPress={() => handleStartTask(taskResult.task.id_task)}
-                        >
+                            onPress={() => handleStartTask(taskResult.task.id_task, taskResult.status)}
+                          >
                             {taskResult.status === 'completed' ? 'Повторить' : 
                             taskResult.status === 'in_progress' ? 'Продолжить' : 'Начать'}
-                        </Button>
-                        }
-                        
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -253,19 +263,19 @@ export const MakeTask = () => {
             </Card>
             <Card className="bg-default-100 p-4">
               <div className="text-sm text-default-600">Завершено</div>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-success">
                 {tasksData?.filter(t => t.status === 'completed').length || 0}
               </div>
             </Card>
             <Card className="bg-default-100 p-4">
               <div className="text-sm text-default-600">В процессе</div>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-warning">
                 {tasksData?.filter(t => t.status === 'in_progress').length || 0}
               </div>
             </Card>
             <Card className="bg-default-100 p-4">
               <div className="text-sm text-default-600">Не начато</div>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-danger">
                 {tasksData?.filter(t => t.status === 'not_started').length || 0}
               </div>
             </Card>
