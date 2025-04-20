@@ -380,7 +380,7 @@ export const HomePage = () => {
                         label: "Новый пароль", 
                         name: "password", 
                         type: "password", 
-                        placeholder: "Оставьте пустым, если не хотите менять",
+                        placeholder: "Пустое, если не изменяете пароль",
                         description: "Минимум 6 символов",
                         value: formData.password 
                       },

@@ -2,44 +2,131 @@ import type React from 'react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import type { ChemicalSubstance, ChemicalType } from '../../app/types';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Card, 
+  CardHeader, 
+  CardBody, 
+  Divider, 
+  Button,
+  Input,
+  Checkbox,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter
+} from '@heroui/react';
+import { FiCheck, FiInfo, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 import { ChemicalDropdown } from '../../components/chemical-dropdown';
 import { Flask } from '../../components/flask';
 import { MixingFlask } from '../../components/mixing-flask';
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  Divider,
-  Button,
-  Input,
-  Checkbox
-} from '@heroui/react';
-import { FiCheck, FiInfo, FiRefreshCw } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
-import { useFinishUserTaskAttemptMutation } from '../../app/services/taskApi';
+import type { ChemicalSubstance, ChemicalType } from '../../app/types';
+import { 
+  useFinishUserTaskAttemptMutation,
+} from '../../app/services/taskApi';
+import { useGetSelfAtemptQuery } from '../../app/services/resultsApi';
 
-export const VirtualLab: React.FC = () => {
+const TARGET_REACTIONS = [
+  {
+    reactants: ["NaOH", "HCl"],
+    products: ["NaCl", "H₂O"],
+    description: "Гидроксид натрия + соляная кислота",
+    completed: false,
+  },
+  {
+    reactants: ["CuSO₄", "2NaOH"],
+    products: ["Na₂SO₄", "Cu(OH)₂↓"],
+    description: "Сульфат меди(II) + гидроксид натрия",
+    completed: false,
+  },
+  {
+    reactants: ["CuSO₄", "2KOH"],
+    products: ["K₂SO₄", "Cu(OH)₂↓"],
+    description: "Сульфат меди(II) + гидроксид калия",
+    completed: false,
+  },
+  {
+    reactants: ["H₂SO₄", "2NaOH"],
+    products: ["Na₂SO₄", "2H₂O"],
+    description: "Серная кислота + гидроксид натрия",
+    completed: false,
+  },
+  {
+    reactants: ["H₂SO₄", "2KOH"],
+    products: ["K₂SO₄", "2H₂O"],
+    description: "Серная кислота + гидроксид калия",
+    completed: false,
+  },
+  {
+    reactants: ["HCl", "KOH"],
+    products: ["KCl", "H₂O"],
+    description: "Соляная кислота + гидроксид калия",
+    completed: false,
+  },
+  {
+    reactants: ["Cu(OH)₂", "H₂SO₄"],
+    products: ["CuSO₄", "2H₂O"],
+    description: "Гидроксид меди(II) + серная кислота",
+    completed: false,
+  },
+  {
+    reactants: ["ZnSO₄", "2NaOH"],
+    products: ["Na₂SO₄", "Zn(OH)₂↓"],
+    description: "Сульфат цинка + гидроксид натрия",
+    completed: false,
+  },
+  {
+    reactants: ["FeSO₄", "2NaOH"],
+    products: ["Na₂SO₄", "Fe(OH)₂↓"],
+    description: "Сульфат железа(II) + гидроксид натрия",
+    completed: false,
+  },
+];
+
+export const VirtualLab3: React.FC = () => {
   const navigate = useNavigate();
   const [finishAttempt] = useFinishUserTaskAttemptMutation();
+  const { data: attemptsData } = useGetSelfAtemptQuery();
   
   // Состояния для эксперимента
   const [flasks, setFlasks] = useState<Array<{id: string; substance: ChemicalSubstance}>>([]);
   const [mixture, setMixture] = useState<ChemicalSubstance[]>([]);
   const [score, setScore] = useState<number | null>(null);
   const [isExperimentComplete, setIsExperimentComplete] = useState(false);
-  const [hasTargetProduct, setHasTargetProduct] = useState(false);
+  const [completedReactions, setCompletedReactions] = useState(TARGET_REACTIONS.map(r => ({...r, completed: false})));
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [mixingFlaskKey, setMixingFlaskKey] = useState<number>(0);
   const [comment, setComment] = useState('');
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const boundsRef = useRef<HTMLDivElement>(null);
+
+  // Проверяем есть ли завершенные попытки
+  const hasCompletedAttempt = attemptsData?.some(
+    attempt => attempt.task.id_task === 3 && attempt.status === 'completed'
+  );
+
+  // Устанавливаем начальное время из последней попытки (если есть)
+  useEffect(() => {
+    if (attemptsData) {
+      const currentAttempt = attemptsData.find(
+        attempt => attempt.task.id_task === 3 && attempt.status === 'in_progress'
+      );
+      
+      if (currentAttempt?.attempts[0].date_start) {
+        setStartTime(new Date(currentAttempt.attempts[0].date_start));
+      }
+    }
+  }, [attemptsData]);
 
   // Таймер для отслеживания времени
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
     if (startTime && !isExperimentComplete) {
+      setElapsedTime(Math.floor((new Date().getTime() - startTime.getTime()) / 1000));
+      
       interval = setInterval(() => {
         setElapsedTime(Math.floor((new Date().getTime() - startTime.getTime()) / 1000));
       }, 1000);
@@ -48,20 +135,38 @@ export const VirtualLab: React.FC = () => {
     return () => clearInterval(interval);
   }, [startTime, isExperimentComplete]);
 
-  // Проверка наличия целевого продукта (NaCl)
+  // Проверка завершенных реакций
   useEffect(() => {
-    console.log(mixture)
-    const hasNaCl = mixture.some(chem => chem.formula === '2NaCl');
-    setHasTargetProduct(hasNaCl);
+    if (mixture.length >= 2) {
+      const newCompletedReactions = [...completedReactions];
+      let updated = false;
+      
+      for (let i = 0; i < newCompletedReactions.length; i++) {
+        const reaction = newCompletedReactions[i];
+        if (!reaction.completed) {
+          const hasProducts = reaction.products.every(p => 
+            mixture.some(m => m.formula === p));
+          
+          if (hasProducts) {
+            newCompletedReactions[i].completed = true;
+            updated = true;
+          }
+        }
+      }
+      
+      if (updated) {
+        setCompletedReactions(newCompletedReactions);
+      }
+    }
   }, [mixture]);
 
   const handleSelectChemical = useCallback((type: ChemicalType, chemical: ChemicalSubstance) => {
-    if (isExperimentComplete) return;
+    if (isExperimentComplete || hasCompletedAttempt) return;
     if (!startTime) setStartTime(new Date());
     
     const id = `flask-${Date.now()}`;
     setFlasks(prev => [...prev, { id, substance: chemical }]);
-  }, [isExperimentComplete, startTime]);
+  }, [isExperimentComplete, startTime, hasCompletedAttempt]);
 
   const handleRemoveFlask = useCallback((id: string) => {
     setFlasks(prev => prev.filter(f => f.id !== id));
@@ -72,25 +177,26 @@ export const VirtualLab: React.FC = () => {
     
     const minutes = Math.floor(elapsedTime / 60);
     const flaskCount = flasks.length;
-    let calculatedScore = 10;
+    const completedCount = completedReactions.filter(r => r.completed).length;
+    let calculatedScore = Math.floor((completedCount / TARGET_REACTIONS.length) * 10);
 
-    // Штраф за время (максимум -4 балла)
-    if (minutes > 10) {
-      const timePenalty = Math.min(4, Math.floor((minutes - 10) / 10) * 2);
+    // Штраф за время (максимум -3 балла)
+    if (minutes > 15) {
+      const timePenalty = Math.min(3, Math.floor((minutes - 15) / 5));
       calculatedScore -= timePenalty;
     }
 
-    // Штраф за лишние пробирки (максимум -4 балла)
-    if (flaskCount > 2) {
-      const flaskPenalty = Math.min(4, flaskCount - 2);
+    // Штраф за лишние пробирки (максимум -3 балла)
+    if (flaskCount > TARGET_REACTIONS.length * 2) {
+      const flaskPenalty = Math.min(3, Math.floor((flaskCount - TARGET_REACTIONS.length * 2) / 2));
       calculatedScore -= flaskPenalty;
     }
 
     return Math.max(0, calculatedScore);
-  }, [elapsedTime, flasks.length, startTime]);
+  }, [elapsedTime, flasks.length, startTime, completedReactions]);
 
   const handleCompleteExperiment = useCallback(async () => {
-    if (isExperimentComplete) return;
+    if (isExperimentComplete || hasCompletedAttempt) return;
     
     const calculatedScore = calculateScore();
     setScore(calculatedScore);
@@ -98,34 +204,29 @@ export const VirtualLab: React.FC = () => {
     
     try {
       await finishAttempt({
-        id_task: 1,
+        id_task: 3,
         score: calculatedScore,
         comment_user: comment
       }).unwrap();
     } catch (error) {
       console.error('Failed to finish attempt:', error);
     }
-  }, [isExperimentComplete, calculateScore, comment, finishAttempt]);
+  }, [isExperimentComplete, calculateScore, comment, finishAttempt, hasCompletedAttempt]);
 
   const handleResetMixingFlask = useCallback(() => {
+    if (hasCompletedAttempt) return;
     setMixture([]);
-    setScore(null);
-    setIsExperimentComplete(false);
-    setFlasks([]);
-    setStartTime(null);
-    setElapsedTime(0);
-    setComment('');
-    setHasTargetProduct(false);
-  }, []);
+    setMixingFlaskKey(prev => prev + 1);
+  }, [hasCompletedAttempt]);
 
   const handleDropToMixingFlask = useCallback((substance: ChemicalSubstance, id: string) => {
-    if (isExperimentComplete) return false;
+    if (isExperimentComplete || hasCompletedAttempt) return false;
     if (!startTime) setStartTime(new Date());
     
     setMixture(prev => [...prev, substance]);
     handleRemoveFlask(id);
     return true;
-  }, [isExperimentComplete, startTime, handleRemoveFlask]);
+  }, [isExperimentComplete, startTime, handleRemoveFlask, hasCompletedAttempt]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -133,9 +234,38 @@ export const VirtualLab: React.FC = () => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Показываем модальное окно при наличии завершенной попытки
+  useEffect(() => {
+    if (hasCompletedAttempt) {
+      setShowCompletionModal(true);
+    }
+  }, [hasCompletedAttempt]);
+
+  const allReactionsCompleted = completedReactions.every(r => r.completed);
+
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-screen bg-default-50 p-4 gap-4 h-[100%]">
+      {/* Модальное окно о завершенном задании */}
+      <Modal isOpen={showCompletionModal} onClose={() => setShowCompletionModal(false)}>
+        <ModalContent>
+          <ModalHeader className="flex items-center gap-2">
+            <FiAlertCircle className="text-warning" />
+            <span>Задание уже выполнено</span>
+          </ModalHeader>
+          <ModalBody>
+            <p>Вы уже успешно завершили это задание. Повторное выполнение невозможно.</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button 
+              color="primary" 
+              onPress={() => navigate('/makeTask')}
+            >
+              Вернуться к списку заданий
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <div className="flex flex-col bg-default-50 p-4 gap-4 h-[90vh]">
 
         <div className="grid grid-cols-5 gap-4">
           <ChemicalDropdown 
@@ -167,8 +297,8 @@ export const VirtualLab: React.FC = () => {
 
         <div className="flex gap-4 flex-1">
           <Card className="flex-1" ref={boundsRef}>
-            <CardBody className="relative p-6 h-full">
-              <div className="absolute inset-0 p-6 flex h-full">
+            <CardBody className="relative p-6 ">
+              <div className="absolute inset-0 p-6 flex ">
                 <div className="flex-1 grid grid-cols-6 gap-6 auto-rows-min content-start p-4">
                   {flasks.map(flask => (
                     <Flask 
@@ -220,7 +350,7 @@ export const VirtualLab: React.FC = () => {
           <Card className="w-80 flex flex-col">
             <CardHeader className="flex items-center gap-2">
               <FiInfo className="text-secondary" />
-              <h2 className="text-lg font-semibold">Задание: Реакция соединения</h2>
+              <h2 className="text-lg font-semibold">Задание: Реакции обмена</h2>
             </CardHeader>
             <Divider />
             <CardBody className="flex-1 flex flex-col">
@@ -228,34 +358,45 @@ export const VirtualLab: React.FC = () => {
                 <div>
                   <h3 className="font-medium">Цель:</h3>
                   <p className="text-default-600 text-sm">
-                    Провести реакцию: Na + Cl<sub>2</sub> → NaCl
+                    Провести реакции обмена между:
                   </p>
+                  <ul className="list-disc list-inside text-default-600 text-sm mt-1 space-y-1">
+                    <li>Кислотами и щелочами</li>
+                    <li>Солями и щелочами</li>
+                    <li>Нерастворимыми основаниями и кислотами</li>
+                  </ul>
                 </div>
                 
                 <div>
                   <h3 className="font-medium">Критерии оценки:</h3>
                   <ul className="list-disc list-inside text-default-600 text-sm space-y-1">
-                    <li>Идеальное время: до 10 минут</li>
-                    <li>Идеальное количество веществ: 2 (Na и Cl<sub>2</sub>)</li>
-                    <li>Штраф за время: -2 балла за каждые 10 минут сверх лимита</li>
-                    <li>Штраф за вещества: -1 балл за каждое лишнее вещество</li>
+                    <li>Идеальное время: до 15 минут</li>
+                    <li>Не более 2 пробирок на каждую реакцию</li>
+                    <li>Необходимо провести все 9 реакций</li>
                   </ul>
                 </div>
 
                 <Divider />
 
                 <div className="space-y-2">
-                  <Checkbox 
-                    isSelected={hasTargetProduct}
-                    isDisabled
-                  >
-                    Получен NaCl
-                  </Checkbox>
+                  <div className="max-h-60 overflow-y-auto pr-2">
+                    <p className='mb-5'> Провести реакции:</p>
+                    {TARGET_REACTIONS.map((reaction, index) => (
+                      <Checkbox 
+                        key={index}
+                        isSelected={completedReactions[index].completed}
+                        isDisabled
+                        className="block mb-2"
+                      >
+                        {reaction.description}
+                      </Checkbox>
+                    ))}
+                  </div>
                   <p className="text-default-600 text-sm">
                     Время: {startTime ? formatTime(elapsedTime) : '0:00'}
                   </p>
                   <p className="text-default-600 text-sm">
-                    Использовано пробирок: {flasks.length}
+                    Прогресс: {completedReactions.filter(r => r.completed).length} / {TARGET_REACTIONS.length}
                   </p>
                 </div>
 
@@ -296,7 +437,7 @@ export const VirtualLab: React.FC = () => {
                     variant="solid"
                     startContent={<FiCheck />}
                     className="w-full"
-                    isDisabled={!hasTargetProduct}
+                    isDisabled={!allReactionsCompleted}
                   >
                     Завершить эксперимент
                   </Button>

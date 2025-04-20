@@ -159,13 +159,15 @@ export const ResultsPage = () => {
               
               {selectedGroup && (
                 <div className="flex items-center gap-4">
+                  <span className="ml-2 mr-5">Студентов:</span>
                   <Badge 
                     content={groups?.find(g => g.hash_code_login === selectedGroup)?.users.length || 0}
                     color="primary"
                     shape="circle"
                     size="lg"
+                    className='mr-5'
                   >
-                    <span className="ml-2">Студентов</span>
+                    
                   </Badge>
                 </div>
               )}
@@ -182,14 +184,15 @@ export const ResultsPage = () => {
                 Результаты группы: {groups?.find(g => g.hash_code_login === selectedGroup)?.group_number}
               </h2>
               <div className="flex gap-4">
+              <h2 className="mr-5">Заданий:</h2>
                 <Badge 
                   content={groupResults?.available_tasks.length || 0}
                   color="primary"
                   shape="circle"
                   size="lg"
-                >
-                  <span className="ml-2">Заданий</span>
-                </Badge>
+                  className='mt-3 mr-5'
+                />
+
               </div>
             </div>
           </CardHeader>
@@ -223,7 +226,6 @@ export const ResultsPage = () => {
                         <TableColumn>Завершено</TableColumn>
                         <TableColumn>В процессе</TableColumn>
                         <TableColumn>Не начато</TableColumn>
-                        <TableColumn>Действия</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {groupResults?.users_attempts.map((user) => {
@@ -265,11 +267,6 @@ export const ResultsPage = () => {
                                   shape="circle" 
                                   size="lg"
                                 />
-                              </TableCell>
-                              <TableCell>
-                                <Button size="sm" color="primary">
-                                  Подробнее
-                                </Button>
                               </TableCell>
                             </TableRow>
                           );

@@ -73,9 +73,10 @@ const typeColors = {
 interface ChemicalDropdownProps {
   type: ChemicalType;
   onSelect: (chemical: ChemicalSubstance) => void;
+  disabled: boolean;
 }
 
-export const ChemicalDropdown: React.FC<ChemicalDropdownProps> = ({ type, onSelect }) => {
+export const ChemicalDropdown: React.FC<ChemicalDropdownProps> = ({ type, onSelect, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const getTypeLabel = () => {
@@ -90,7 +91,7 @@ export const ChemicalDropdown: React.FC<ChemicalDropdownProps> = ({ type, onSele
   };
 
   return (
-    <Dropdown isOpen={isOpen} onOpenChange={setIsOpen}>
+    <Dropdown isOpen={isOpen} onOpenChange={setIsOpen} isDisabled={disabled}>
       <DropdownTrigger>
         <Button 
           color={typeColors[type]}

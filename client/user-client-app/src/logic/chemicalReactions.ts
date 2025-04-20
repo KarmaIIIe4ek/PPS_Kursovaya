@@ -177,14 +177,14 @@ export const CHEMICAL_REACTIONS: ChemicalReaction[] = [
   },
   {
     reactants: ["ZnSO₄", "2NaOH"],
-    products: ["Na₂SO₄", "Zn(OH)₂"],
+    products: ["Na₂SO₄", "Zn(OH)₂↓"],
     description: "Сульфат цинка + гидроксид натрия",
     type: "double-replacement",
     duration: "fast" // Быстрое образование осадка
   },
   {
     reactants: ["FeSO₄", "2NaOH"],
-    products: ["Na₂SO₄", "Fe(OH)₂"],
+    products: ["Na₂SO₄", "Fe(OH)₂↓"],
     description: "Сульфат железа(II) + гидроксид натрия",
     type: "double-replacement",
     duration: "moderate" // Образование осадка за несколько минут

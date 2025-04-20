@@ -21,6 +21,8 @@ import { SelfResultsPage } from "./pages/self-results"
 import { TeacherGuard } from "./features/user/roleGuard"
 import { MakeTask } from "./pages/makeTask"
 import { VirtualLab } from "./pages/virtual-lab-1"
+import { VirtualLab2 } from "./pages/virtual-lab-2"
+import { VirtualLab3 } from "./pages/virtual-lab-3"
 
 const router = createBrowserRouter([
   {
@@ -62,6 +64,14 @@ const router = createBrowserRouter([
       {
         path: "task/1",
         element: <VirtualLab />, 
+      },
+      {
+        path: "task/2",
+        element: <VirtualLab2 />, 
+      },
+      {
+        path: "task/3",
+        element: <VirtualLab3 />, 
       },
       
       // Teacher-only routes

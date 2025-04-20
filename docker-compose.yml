@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL сервис
+  db:
+    image: postgres:13
+    container_name: lab_db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Backend сервис (Node.js)
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      HTTPS_PORT_USER: ${HTTPS_PORT_USER}
+      HTTPS_PORT_ADMIN: ${HTTPS_PORT_ADMIN}
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      NODE_ENV: ${NODE_ENV}
+    ports:
+      - "5000:5000"  # Пользовательский порт
+      - "5001:5001"  # Админский порт
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Frontend сервис (Vite) - пользовательский клиент
+  frontend-user:
+    build:
+      context: ./user-client-app
+      dockerfile: Dockerfile
+    container_name: frontend-user
+    ports:
+      - "5173:5173"  # Стандартный порт Vite
+    volumes:
+      - ./user-client-app:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
