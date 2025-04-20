@@ -59,7 +59,7 @@ const startUserServer = async () => {
         await sequelize.sync();
         logger.info('Подключение к базе данных успешно установлено');
 
-        https.createServer(options, appUser).listen(HTTPS_PORT_USER, () => {
+        https.createServer(options, appUser).listen(HTTPS_PORT_USER, '0.0.0.0',  () => {
             logger.info(`Пользовательский HTTPS сервер запущен на порту ${HTTPS_PORT_USER}`);
             console.log(`Пользовательский HTTPS сервер запущен на порту ${HTTPS_PORT_USER}`);
         });
@@ -77,7 +77,7 @@ const startAdminServer = async () => {
         await sequelize.sync();
         logger.info('Подключение к базе данных успешно установлено');
 
-        https.createServer(options, appAdmin).listen(HTTPS_PORT_ADMIN, () => {
+        https.createServer(options, appAdmin).listen(HTTPS_PORT_ADMIN, '0.0.0.0', () => {
             logger.info(`Админский HTTPS сервер запущен на порту ${HTTPS_PORT_ADMIN}`);
             console.log(`Админский HTTPS сервер запущен на порту ${HTTPS_PORT_ADMIN}`);
         });

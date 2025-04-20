@@ -1,4 +1,4 @@
-import type { GroupWithTasksAndAttempts } from "../types";
+import type { GroupWithTasksAndAttempts, UserTaskAttempt } from "../types";
 import { api } from "./api";
 
 export const resultsApi = api.injectEndpoints({
@@ -11,15 +11,26 @@ export const resultsApi = api.injectEndpoints({
                 url: `/teacher/group/getGroupAttempts?hash_code_login=${encodeURIComponent(hash_code_login)}`,
                 method: 'GET' 
             })
+        }),
+        getSelfAtempt: builder.query<
+        UserTaskAttempt[],
+        void 
+    >({
+        query: () => ({
+            url: 'student/task/getSelfAttempts',
+            method: 'GET' 
         })
+    })
     })
 })
 
 export const {
     useGetGroupAttemptsQuery,
-    useLazyGetGroupAttemptsQuery
+    useLazyGetGroupAttemptsQuery,
+    useGetSelfAtemptQuery,
+    useLazyGetSelfAtemptQuery
 } = resultsApi;
 
 export const {
-    endpoints: { getGroupAttempts },
+    endpoints: { getGroupAttempts, getSelfAtempt},
   } = resultsApi

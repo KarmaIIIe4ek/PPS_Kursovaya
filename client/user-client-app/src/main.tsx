@@ -17,11 +17,17 @@ import { ModifyGroup } from "./pages/modufy-group"
 import { PurchasePage } from "./pages/purchase"
 import { ResultsPage } from "./pages/results"
 import { HomePage } from "./pages/home"
+import { SelfResultsPage } from "./pages/self-results"
+import { TeacherGuard } from "./features/user/roleGuard"
+import { MakeTask } from "./pages/makeTask"
+import { VirtualLab } from "./pages/virtual-lab-1"
+import { VirtualLab2 } from "./pages/virtual-lab-2"
+import { VirtualLab3 } from "./pages/virtual-lab-3"
 
 const router = createBrowserRouter([
   {
     path: "/auth",
-    element: <Auth />, // Страница авторизации
+    element: <Auth />,
   },
   {
     path: "/main",
@@ -36,7 +42,7 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "",
+        path: "profile",
         element: <HomePage />, 
       },
       {
@@ -44,23 +50,55 @@ const router = createBrowserRouter([
         element: <GroupPage />, 
       },
       {
-        path: "modifyGroup",
-        element: <ModifyGroup />, 
+        path: "selfResults",
+        element: <SelfResultsPage />, 
       },
       {
         path: "support",
         element: <Support />, 
       },
       {
+        path: "makeTask",
+        element: <MakeTask />, 
+      },
+      {
+        path: "task/1",
+        element: <VirtualLab />, 
+      },
+      {
+        path: "task/2",
+        element: <VirtualLab2 />, 
+      },
+      {
+        path: "task/3",
+        element: <VirtualLab3 />, 
+      },
+      
+      // Teacher-only routes
+      {
         path: "purchase",
-        element: <PurchasePage />, 
+        element: (
+          <TeacherGuard>
+            <PurchasePage />
+          </TeacherGuard>
+        ), 
       },
       {
         path: "results",
-        element: <ResultsPage />, 
+        element: (
+          <TeacherGuard>
+            <ResultsPage />
+          </TeacherGuard>
+        ), 
       },
-
-      // другие защищенные маршруты
+      {
+        path: "modifyGroup",
+        element: (
+          <TeacherGuard>
+            <ModifyGroup />
+          </TeacherGuard>
+        ), 
+      },
     ],
   },
 ])

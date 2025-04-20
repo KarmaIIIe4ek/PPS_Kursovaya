@@ -136,3 +136,37 @@ export type GroupWithMembers = {
   creator: GroupCreator;
   members: GroupMember[];
 };
+
+export type UserTaskAttempt = {
+  task: Task;
+  groups: Group[];
+  attempts: Attempt[];
+  status: 'completed' | 'in_progress' | 'not_started';
+};
+
+export type ChemicalType = 'simple' | 'oxides' | 'acids' | 'salts' | 'hydroxides';
+
+export interface ChemicalSubstance {
+  formula: string;
+  name: string;
+  type: ChemicalType;
+}
+
+export interface FlaskData {
+  id: string;
+  chemical: string;
+  position?: { x: number; y: number };
+}
+
+export interface ExperimentResult {
+  mixtures: string[][];
+  reactions: number;
+  score: number;
+  completed: boolean;
+}
+
+export interface Reaction {
+  reactants: string[];
+  products: string[];
+  type?: 'decomposition' | 'combination' | 'substitution';
+};

@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PostgreSQL сервис
+  db:
+    image: postgres:13
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    container_name: database_postgresql
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:  # Добавьте это!
+      - app-network
+
+  # Backend сервис (Node.js)
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      HTTPS_PORT_USER: ${HTTPS_PORT_USER}
+      HTTPS_PORT_ADMIN: ${HTTPS_PORT_ADMIN}
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      NODE_ENV: ${NODE_ENV}
+    ports:
+      - "5000:5000"  # Пользовательский порт
+      - "5001:5001"  # Админский порт
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    networks:  # Добавьте это!
+      - app-network
+
+  # Frontend сервис (Vite) - пользовательский клиент
+  frontend-user:
+    build:
+      context: ./client/user-client-app
+      dockerfile: Dockerfile
+    container_name: frontend-user
+    ports:
+      - "5173:5173"  # Стандартный порт Vite
+    volumes:
+      - ./client/user-client-app:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:  # Добавьте это!
+      - app-network
+
+  # Nginx сервис
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"      # HTTP
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d  # Конфиги Nginx
+    depends_on:
+      - backend
+      - frontend-user
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    name: code_app-network  # Явно указываем имя сети
+    driver: bridge

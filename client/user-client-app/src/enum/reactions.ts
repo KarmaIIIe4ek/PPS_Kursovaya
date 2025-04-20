@@ -1,0 +1,22 @@
+export const CHEMICAL_COLORS: Record<string, string> = {
+  'Na': 'bg-yellow-400',
+  'Zn': 'bg-gray-500',
+  'H₂SO₄': 'bg-red-300',
+  'HCl': 'bg-green-300',
+  'CuSO₄': 'bg-blue-400',
+  'NaOH': 'bg-purple-300',
+  'KOH': 'bg-indigo-300',
+  'NaCl': 'bg-gray-300',
+  'H₂O': 'bg-blue-300',
+  'Na₂SO₄': 'bg-blue-200',
+  'Cu(OH)₂': 'bg-blue-500',
+  'ZnCl₂': 'bg-gray-400',
+  'H₂': 'bg-pink-300',
+  'Cl₂': 'bg-green-100',
+  'K₂SO₄': 'bg-blue-100',
+  'FeSO₄': 'bg-green-200',
+  'Cu': 'bg-orange-300',
+  'Ca(OH)₂': 'bg-gray-200',
+  'CuO': 'bg-black',
+  'SO₃': 'bg-yellow-100'
+};

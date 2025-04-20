@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { Admin } = require('../models/models');
 const generateJwt = require('../utils/jwtGenerate')
 

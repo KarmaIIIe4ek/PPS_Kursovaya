@@ -13,5 +13,6 @@ router.get('/task/getTasksWithGroups', authMiddleware, studentController.getTask
 router.get('/task/getUserTaskAttempts', authMiddleware, studentController.getUserTaskAttempts)
 router.post('/task/createUserTaskAttempt', authMiddleware, studentController.createUserTaskAttempt)
 router.post('/task/finishUserTaskAttempt', authMiddleware, studentController.finishUserTaskAttempt)
+router.get('/task/getSelfAttempts', authMiddleware, studentController.getSelfAttempts)
 
 module.exports = router
