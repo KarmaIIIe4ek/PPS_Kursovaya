@@ -15,7 +15,8 @@ import {
   Chip,
   Button,
   Select,
-  SelectItem
+  SelectItem,
+  Avatar
 } from '@heroui/react';
 import {
   FiBook,
@@ -150,9 +151,13 @@ export const MakeTask = () => {
       animate="show"
       variants={fadeIn}
     >
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <FiBook /> Доступные задания
-      </h1>
+      <motion.div className="flex items-center gap-3 mb-8">
+        <Avatar
+        icon={<FiBook className="text-lg" />}
+        className="bg-primary-100 text-primary-500"
+        />
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">Доступные задания</h1>
+      </motion.div>
 
       <Card className="mb-6">
         <CardHeader>

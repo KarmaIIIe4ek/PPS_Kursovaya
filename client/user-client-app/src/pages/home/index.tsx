@@ -12,7 +12,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  useDisclosure
+  useDisclosure,
+  Divider
 } from '@heroui/react';
 import {
   FiUser,
@@ -21,7 +22,9 @@ import {
   FiMail,
   FiCalendar,
   FiX,
-  FiCheck
+  FiCheck,
+  FiLock,
+  FiUnlock
 } from 'react-icons/fi';
 import { 
   useGetInfoAboutSelfQuery,
@@ -35,15 +38,26 @@ import * as yup from "yup";
 import { useTheme } from '../../hooks/useTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Анимации
+// Улучшенные анимации
+const pageAnimation = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      when: "beforeChildren"
+    }
+  }
+};
+
 const cardAnimation = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
     opacity: 1, 
     y: 0,
     transition: {
-      duration: 0.5,
-      ease: "easeOut"
+      duration: 0.6,
+      ease: [0.25, 0.1, 0.25, 1]
     }
   }
 };
@@ -62,19 +76,38 @@ const fadeIn = {
 const staggerContainer = {
   visible: {
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.15,
+      delayChildren: 0.2
     }
   }
 };
 
 const itemAnimation = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 15 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5
+      duration: 0.5,
+      ease: "backOut"
     }
+  }
+};
+
+const hoverEffect = {
+  transition: { 
+    type: "spring", 
+    stiffness: 400, 
+    damping: 10 
+  }
+};
+
+const tapEffect = {
+  scale: 0.98,
+  transition: { 
+    type: "spring", 
+    stiffness: 800, 
+    damping: 20 
   }
 };
 
@@ -201,11 +234,19 @@ export const HomePage = () => {
     return (
       <div className="flex justify-center items-center h-screen">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ 
+            duration: 0.6,
+            ease: "easeInOut",
+            scale: {
+              type: "spring",
+              damping: 10,
+              stiffness: 100
+            }
+          }}
         >
-          <Spinner size="lg" />
+          <Spinner size="lg" className="text-primary-500" />
         </motion.div>
       </div>
     );
@@ -217,17 +258,38 @@ export const HomePage = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
+          transition={{ 
+            type: "spring",
+            damping: 15,
+            stiffness: 100
+          }}
           className="w-full max-w-md"
         >
-          <Card className="w-full">
-            <CardBody className="text-center">
-              <p className="text-danger">Ошибка загрузки данных пользователя</p>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+          <Card className="w-full shadow-xl">
+            <CardBody className="text-center p-8">
+              <motion.div
+                animate={{ 
+                  x: [-5, 5, -5],
+                  transition: { 
+                    repeat: Infinity, 
+                    duration: 1.5 
+                  } 
+                }}
+              >
+                <FiX className="text-danger-500 text-4xl mx-auto mb-4" />
+              </motion.div>
+              <p className="text-danger-500 text-lg font-medium mb-6">
+                Ошибка загрузки данных пользователя
+              </p>
+              <motion.div 
+                whileHover={hoverEffect}
+                whileTap={tapEffect}
+              >
                 <Button 
                   color="primary" 
                   onClick={() => refetch()}
-                  className="mt-4"
+                  className="mt-4 px-8 py-3 rounded-lg"
+                  size="lg"
                 >
                   Попробовать снова
                 </Button>
@@ -243,109 +305,159 @@ export const HomePage = () => {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={fadeIn}
+      variants={pageAnimation}
       className="container mx-auto px-4 py-8 max-w-4xl"
     >
-      <motion.div variants={itemAnimation}>
-        <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-          <FiUser /> Личный кабинет
+      <motion.div 
+        variants={itemAnimation}
+        className="mb-10"
+      >
+        <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+          <motion.span 
+            className="bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent"
+          >
+            Личный кабинет
+          </motion.span>
+          <motion.div
+            animate={{
+
+              transition: { 
+                repeat: Infinity, 
+                repeatType: "reverse", 
+                duration: 2 
+              }
+            }}
+          >
+            <FiUser className="text-primary-500" />
+          </motion.div>
         </h1>
+        <Divider className="my-4" />
       </motion.div>
 
-      <motion.div variants={cardAnimation}>
-        <Card className="mb-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-          <CardHeader className="flex justify-between items-center">
+      <motion.div 
+        variants={cardAnimation}
+      >
+        <Card className="mb-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-transparent">
+          <CardHeader className="flex justify-between items-center p-6">
             <motion.h2 
-              className="text-xl font-semibold"
-              whileHover={{ scale: 1.02 }}
+              className="text-2xl font-semibold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent"
+              whileHover={{ 
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text"
+              }}
             >
               Основная информация
             </motion.h2>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div 
+
+              whileTap={tapEffect}
+            >
               <Button
                 color="primary"
-                size="sm"
+                size="md"
                 onClick={onOpen}
                 icon={<FiEdit />}
+                className="rounded-lg shadow-md"
               >
                 Редактировать
               </Button>
             </motion.div>
           </CardHeader>
-          <CardBody>
+          <CardBody className="p-6">
             <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-8"
               variants={staggerContainer}
               initial="hidden"
               animate="visible"
             >
               <motion.div 
-                className="flex flex-col items-center"
+                className="flex flex-col items-center p-4"
                 variants={itemAnimation}
               >
-                <motion.div whileHover={{ scale: 1.05 }}>
+                <motion.div 
+                  whileHover={{ 
+                    rotate: [0, 5, -5, 0],
+                    transition: { duration: 0.5 }
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <Avatar
                     text={`${user.firstname[0]}${user.lastname[0]}`}
-                    className="w-24 h-24 text-2xl mb-4 shadow-md"
+                    className="w-28 h-28 text-3xl mb-6 shadow-lg border-2 border-primary-500"
                   />
                 </motion.div>
-                <motion.h3 
-                  className="text-xl font-semibold text-center"
-                  whileHover={{ scale: 1.02 }}
+                <motion.h2 
+                  className="text-2xl font-bold text-center mb-2 "
                 >
                   {user.lastname} {user.firstname} {user.middlename || ''}
-                </motion.h3>
+                </motion.h2>
                 <motion.div 
-                  className="mt-2"
-                  whileHover={{ scale: 1.03 }}
+                  className="mt-4 px-4 py-2 rounded-full bg-opacity-20"
+                  whileHover={{ scale: 1.05 }}
+                  style={{
+                    backgroundColor: user.role_name === 'student' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(236, 72, 153, 0.2)'
+                  }}
                 >
                   {user.role_name === 'student' ? 
-                    <h2 color="primary" className="flex gap-2 items-center">
-                      <PiStudent size={24}/> Студент
+                    <h2 className="flex gap-2 items-center text-primary-600">
+                      <PiStudent size={24}/> 
+                      <span className="font-medium">Студент</span>
                     </h2> :
-                    <h2 color="primary" className="flex gap-2 items-center">
-                      <GiTeacher size={24}/> Преподаватель
+                    <h2 className="flex gap-2 items-center text-secondary-600">
+                      <GiTeacher size={24}/> 
+                      <span className="font-medium">Преподаватель</span>
                     </h2>
                   }
                 </motion.div>
               </motion.div>
 
               <motion.div 
-                className="space-y-4"
+                className="space-y-6 p-4"
                 variants={itemAnimation}
               >
-                <motion.div variants={itemAnimation}>
-                  <p className="text-sm text-default-500">Email</p>
-                  <p className="flex items-center gap-2">
-                    <FiMail /> {user.email}
-                  </p>
-                </motion.div>
-                <motion.div variants={itemAnimation}>
-                  <p className="text-sm text-default-500">Последняя активность</p>
-                  <p className="flex items-center gap-2">
-                    <FiCalendar /> {formatDate(user.last_login)}
-                  </p>
-                </motion.div>
-                <motion.div variants={itemAnimation}>
-                  <p className="text-sm text-default-500">Аккаунт создан</p>
-                  <p className="flex items-center gap-2">
-                    <FiCalendar /> {formatDate(user.createdAt)}
-                  </p>
-                </motion.div>
-                <motion.div variants={itemAnimation}>
-                  <p className="text-sm text-default-500">Статус</p>
-                  <div className="flex items-center gap-2">
-                    {user.is_blocked ? (
-                      <h2 color="danger" className="flex items-center gap-1">
-                        <FiX color='red'/> Заблокирован
-                      </h2>
-                    ) : (
-                      <h2 color="success" className="flex items-center gap-1">
-                        <FiCheck color='green' /> Активен
-                      </h2>
-                    )}
-                  </div>
-                </motion.div>
+                {[
+                  { 
+                    icon: <FiMail className="text-primary-500" />, 
+                    label: "Email", 
+                    value: user.email 
+                  },
+                  { 
+                    icon: <FiCalendar className="text-primary-500" />, 
+                    label: "Последняя активность", 
+                    value: formatDate(user.last_login) 
+                  },
+                  { 
+                    icon: <FiCalendar className="text-primary-500" />, 
+                    label: "Аккаунт создан", 
+                    value: formatDate(user.createdAt) 
+                  },
+                  { 
+                    icon: user.is_blocked ? 
+                      <FiLock className="text-danger-500" /> : 
+                      <FiUnlock className="text-success-500" />, 
+                    label: "Статус", 
+                    value: user.is_blocked ? "Заблокирован" : "Активен",
+                    color: user.is_blocked ? "text-danger-500" : "text-success-500"
+                  }
+                ].map((item, index) => (
+                  <motion.div 
+                    key={index} 
+                    variants={itemAnimation}
+                    className="p-4 rounded-xl bg-default-50 hover:bg-default-100 transition-colors duration-300"
+                    whileHover={{ x: 5 }}
+                  >
+                    <p className="text-sm text-default-500 mb-1">{item.label}</p>
+                    <p className={`flex items-center gap-3 ${item.color || 'text-default-800'}`}>
+                      <motion.span
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        {item.icon}
+                      </motion.span>
+                      <span className="font-medium">{item.value}</span>
+                    </p>
+                  </motion.div>
+                ))}
               </motion.div>
             </motion.div>
           </CardBody>
@@ -357,19 +469,33 @@ export const HomePage = () => {
         {isOpen && (
           <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ 
+                type: "spring",
+                damping: 20,
+                stiffness: 300
+              }}
+              className="bg-gradient-to-br from-default-50 to-default-100 rounded-xl overflow-hidden"
             >
-              <ModalContent>
-                <ModalHeader className="flex flex-col gap-1">
-                  Редактирование профиля
+              <ModalContent className="border-none shadow-2xl">
+                <ModalHeader className="flex flex-col gap-1 p-6 bg-gradient-to-r from-primary-500 to-secondary-500">
+                  <motion.h3 
+                    className="text-2xl font-bold text-white"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    Редактирование профиля
+                  </motion.h3>
                 </ModalHeader>
-                <ModalBody>
+                <ModalBody className="p-6">
                   <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
                   >
                     {[
                       { label: "Фамилия", name: "lastname", value: formData.lastname },
@@ -380,7 +506,7 @@ export const HomePage = () => {
                         label: "Новый пароль", 
                         name: "password", 
                         type: "password", 
-                        placeholder: "Пустое, если не изменяете пароль",
+                        placeholder: "Оставьте пустым, если не меняете",
                         description: "Минимум 6 символов",
                         value: formData.password 
                       },
@@ -393,7 +519,11 @@ export const HomePage = () => {
                         disabled: !formData.password
                       }
                     ].map((input, index) => (
-                      <motion.div key={index} variants={itemAnimation}>
+                      <motion.div 
+                        key={index} 
+                        variants={itemAnimation}
+                        whileHover={{ y: -2 }}
+                      >
                         <Input
                           label={input.label}
                           name={input.name}
@@ -405,28 +535,45 @@ export const HomePage = () => {
                           errorMessage={errors[input.name as keyof typeof errors]}
                           isInvalid={!!errors[input.name as keyof typeof errors]}
                           disabled={input.disabled}
-                          className="focus:ring-2 focus:ring-primary-500"
+                          className="focus:ring-2 focus:ring-primary-500 border border-default-200 rounded-lg"
+                          variant="bordered"
                         />
                       </motion.div>
                     ))}
                   </motion.div>
                 </ModalBody>
-                <ModalFooter>
-                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                    <Button color="danger" variant="light" onClick={onClose}>
-                      Отмена
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                    <Button 
-                      color="primary" 
-                      onClick={handleSubmit}
-                      isLoading={isEditing}
-                      icon={<FiSave />}
+                <ModalFooter className="p-6 bg-default-50">
+                  <div className="flex gap-4 w-full">
+                    <motion.div 
+                      whileHover={hoverEffect}
+                      whileTap={tapEffect}
+                      className="flex-1"
                     >
-                      Сохранить изменения
-                    </Button>
-                  </motion.div>
+                      <Button 
+                        color="danger" 
+                        variant="light" 
+                        onClick={onClose}
+                        className="w-full rounded-lg py-3"
+                      >
+                        Отмена
+                      </Button>
+                    </motion.div>
+                    <motion.div 
+                      whileHover={hoverEffect}
+                      whileTap={tapEffect}
+                      className="flex-1"
+                    >
+                      <Button 
+                        color="primary" 
+                        onClick={handleSubmit}
+                        isLoading={isEditing}
+                        icon={<FiSave />}
+                        className="w-full rounded-lg py-3 shadow-md"
+                      >
+                        Сохранить изменения
+                      </Button>
+                    </motion.div>
+                  </div>
                 </ModalFooter>
               </ModalContent>
             </motion.div>

@@ -1,26 +1,20 @@
-import type React from 'react';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardHeader,
   CardBody,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Badge,
   Spinner,
+  Avatar,
+  Chip,
+  Accordion,
+  AccordionItem,
+  Button,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  Button,
   DropdownItem,
-  Accordion,
-  Avatar,
-  Chip,
-  AccordionItem
+  Badge,
+  Divider
 } from '@heroui/react';
 import {
   FiPlus,
@@ -36,7 +30,8 @@ import {
   FiMail,
   FiChevronDown,
   FiChevronUp,
-  FiMoreHorizontal
+  FiMoreHorizontal,
+  FiKey
 } from 'react-icons/fi';
 import {
   useCreateMutation,
@@ -46,24 +41,37 @@ import {
   useGrantRightsToGroupMutation,
   useGetAllMyGroupsQuery,
   useGetAllMyAccessQuery,
-  useLazyGetAllMyAccessQuery,
   useChangeIsOpenByIdMutation,
 } from '../../app/services/groupApi';
-import type { GroupWithTasksAndUsers, GroupWithTasks, Task, TaskForGroup } from '../../app/types';
 import { CreateGroupModal } from '../../components/create-group-modal';
 import { AddUserModal } from '../../components/add-user-modal';
 import { GrantRightsModal } from '../../components/grant-rights-modal';
 import { RemoveUserModal } from '../../components/remove-user-modal';
-import { Button as CustomButton } from '../../components/button';
-import { DropdownItemWithIcon } from '../../components/dropdown-item-with-icon';
 import { ErrorModal } from '../../components/error-modal';
 import { useGetAllAvailableQuery } from '../../app/services/taskApi';
 import { ConfirmDeleteGroupModal } from '../../components/confirm-delete-group-modal';
 import { ConfirmChangeIsOpen } from '../../components/confirm-change-is-open';
+import { motion } from 'framer-motion';
+
+// Анимационные варианты
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5 } }
+};
+
+const slideUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+const scaleUp = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+};
 
 export const ModifyGroup = () => {
-  const [selectedGroup, setSelectedGroup] = useState<GroupWithTasksAndUsers | null>(null);
-  const [selectedGroupWithTask, setSelectedGroupWithTasks] = useState<GroupWithTasks | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [selectedGroupWithTask, setSelectedGroupWithTasks] = useState<any>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<number>(-1);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -71,9 +79,6 @@ export const ModifyGroup = () => {
   const [isGrantRightsModalOpen, setIsGrantRightsModalOpen] = useState(false);
   const [isConfirmDeleteGroupModalOpen, setIsConfirmDeleteGroupModalOpen] = useState(false);
   const [isChangeIsOpenModal, setIsChangeIsOpenModal] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-
-  const [email, setEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
 
@@ -91,6 +96,8 @@ export const ModifyGroup = () => {
     refetch: refetchAccess
   } = useGetAllMyAccessQuery();
 
+  const { data: availableTasks } = useGetAllAvailableQuery();
+
   const [createGroup, { isLoading: isCreating }] = useCreateMutation();
   const [addUserToGroup, { isLoading: isAddingUser }] = useAddUserToGroupMutation();
   const [removeUserFromGroup, { isLoading: isRemovingUser }] = useRemoveFromGroupByEmailMutation();
@@ -98,19 +105,10 @@ export const ModifyGroup = () => {
   const [grantRights, { isLoading: isGrantingRights }] = useGrantRightsToGroupMutation();
   const [changeIsOpen, { isLoading: isChangingIsOpen }] = useChangeIsOpenByIdMutation();
 
-
-
-  const {
-    data: availableTasks,
-    isLoading: isLoadingTasks,
-    isError: isTasksError
-  } = useGetAllAvailableQuery();
-
-  const toggleGroupExpand = (groupId: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupId]: !prev[groupId]
-    }));
+  const handleError = (error: any, defaultMessage: string) => {
+    console.error('Ошибка:', error);
+    setErrorMessage(error.data?.message || defaultMessage);
+    setIsErrorModalOpen(true);
   };
 
   const handleCreateGroup = async (groupNumber: string) => {
@@ -244,271 +242,91 @@ export const ModifyGroup = () => {
     { name: "Действия", uid: "actions" }
   ];
 
+
   const renderUserItem = (user: any) => (
-    <div key={user.id_user} className="flex items-center gap-3 py-2 px-4 ">
-      <Avatar name={`${user.lastname} ${user.firstname}`} size="sm" />
-      <div>
-        <p className="font-medium">{user.lastname} {user.firstname} {user.middlename}</p>
-        <p className="text-sm text-gray-500">{user.email}</p>
+    <motion.div 
+      key={user.id_user} 
+      className="flex items-center gap-3 py-2 px-4 hover:bg-default-100 rounded-lg transition-colors"
+      whileHover={{ scale: 1.01 }}
+    >
+      <Avatar 
+        name={`${user.lastname} ${user.firstname}`} 
+        size="sm"
+        className="flex-shrink-0"
+      />
+      <div className="min-w-0">
+        <p className="font-medium truncate">{user.lastname} {user.firstname} {user.middlename}</p>
+        <p className="text-sm text-default-500 truncate">{user.email}</p>
       </div>
-      <Chip size="sm" color={user.role_name === 'teacher' ? 'primary' : 'default'} className="ml-auto">
+      <Chip 
+        size="sm" 
+        color={user.role_name === 'teacher' ? 'primary' : 'default'} 
+        variant="flat"
+        className="ml-auto flex-shrink-0"
+      >
         {user.role_name === 'teacher' ? 'Преподаватель' : 'Студент'}
       </Chip>
-    </div>
+    </motion.div>
   );
 
   const renderTaskItem = (task: any, group: any, isAccessGroup?: boolean) => (
-    <div >
-        <div key={isAccessGroup ? task.id_task_for_group : task.id_task} className="flex items-center gap-3 pt-2 px-4">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-            <FiBookOpen size={16} />
-          </div>
-          <div className="flex w-full items-center justify-between gap-3 py-2 px-4">
-            <p className="font-medium">{task.task?.task_name || task.task_name}</p>
-            {isAccessGroup && (
-              <Chip 
-                size="sm" 
-                color={task.is_open ? 'success' : 'warning'} 
-                className="mt-1"
-              >
-                {task.is_open ? 'Доступ открыт' : 'Доступ закрыт'}
-              </Chip>
-            )}
-          </div>
+    <motion.div 
+      className="hover:bg-default-50 rounded-lg transition-colors"
+      whileHover={{ scale: 1.005 }}
+    >
+      <div className="flex items-start gap-3 p-4">
+        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mt-1 flex-shrink-0">
+          <FiBookOpen size={18} />
         </div>
-        <div className='flex justify-between'>
-        <p className="text-sm text-gray-500 border-none px-20 pb-5 pt-1">{task.task?.description || task.description}</p>
-        <Dropdown className='pb-5'>
-            <DropdownTrigger>
-              <Button
-                variant="ghost"
-                aria-label="Действия с группой"
-                className='w-[20%] my-5 mx-[5%]'
-
-              >
-                <FiMoreHorizontal size={16} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu 
-
-              aria-label="Действия с группой"
-              onAction={(key) => {
-                switch (key) {
-                  case "change-is-open":
-                    setSelectedTaskId(task.task?.id_task)
-                    setSelectedGroupWithTasks(group)
-                    setIsChangeIsOpenModal(true);
-                    break;
-                }
-              }}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{task.task?.task_name || task.task_name}</p>
+          <p className="text-sm text-default-500 mt-1 truncate">
+            {task.task?.description || task.description}
+          </p>
+        </div>
+        {isAccessGroup && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Chip 
+              size="sm" 
+              color={task.is_open ? 'success' : 'warning'} 
+              variant="flat"
             >
-              <DropdownItem 
-                key="change-is-open" 
-                startContent={<FiUserPlus size={16} />}
-                textValue="Добавить участника"
+              {task.is_open ? 'Доступ открыт' : 'Доступ закрыт'}
+            </Chip>
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  isIconOnly
+                  size="sm"
+                  variant="light"
+                  aria-label="Действия"
+                >
+                  <FiMoreHorizontal size={16} />
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu 
+                aria-label="Действия с заданием"
+                onAction={() => {
+                  setSelectedTaskId(task.task?.id_task);
+                  setSelectedGroupWithTasks(group);
+                  setIsChangeIsOpenModal(true);
+                }}
               >
-                Поменять статус доступа
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
-    </div>
-
+                <DropdownItem 
+                  key="change-status"
+                  startContent={<FiKey size={16} />}
+                >
+                  Изменить статус
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 
-  const renderTaskItemWithoutStatus = (task: any, isAccessGroup?: boolean) => (
-    <>
-        <div key={isAccessGroup ? task.id_task_for_group : task.id_task} className="flex items-center gap-3 pt-2 px-4 ">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-            <FiBookOpen size={16} />
-          </div>
-          <div className="flex w-full items-center justify-between gap-3 py-2 px-4">
-            <p className="font-medium">{task.task?.task_name || task.task_name}</p>
-            {isAccessGroup && (
-              <Chip 
-                size="sm" 
-                color={task.is_open ? 'success' : 'warning'} 
-                className="mt-1"
-              >
-                {task.is_open ? 'Доступ открыт' : 'Доступ закрыт'}
-              </Chip>
-            )}
-          </div>
-        </div>
-        <p className="text-sm text-gray-500 border-none px-20 pb-5 pt-1">{task.task?.description || task.description}</p>
-    </>
-
-  );
-
-  const renderMyGroupsCell = (group: any, columnKey: React.Key) => {
-    switch (columnKey) {
-      case "group_number":
-        return <span className="font-medium">{group.group_number}</span>;
-      
-      case "hash_code":
-        return (
-          <div className="flex items-center gap-2">
-            <span className="font-mono">{group.hash_code_login}</span>
-            <CustomButton 
-              size="sm" 
-              variant="ghost" 
-              icon={<FiCopy size={14} />}
-              onClick={() => navigator.clipboard.writeText(group.hash_code_login)}
-            />
-          </div>
-        );
-      
-      case "users":
-        return <Badge color="primary">{group.users.length}</Badge>;
-      
-      case "tasks":
-        return <Badge color="secondary">{group.tasks.length}</Badge>;
-      
-      case "actions":
-        return (
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                variant="ghost"
-                aria-label="Действия с группой"
-                className='w-full'
-              >
-                <FiMoreHorizontal size={16} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu 
-              aria-label="Действия с группой"
-              onAction={(key) => {
-                switch (key) {
-                  case "add-user":
-                    setSelectedGroup(group);
-                    setIsAddUserModalOpen(true);
-                    break;
-                  case "remove-user":
-                    setSelectedGroup(group);
-                    setIsRemoveUserModalOpen(true);
-                    break;
-                  case "grant-rights":
-                    setSelectedGroup(group);
-                    setIsGrantRightsModalOpen(true);
-                    break;
-                  case "delete-group":
-                    setSelectedGroup(group);
-                    setIsConfirmDeleteGroupModalOpen(true);
-                    break;
-                }
-              }}
-            >
-              <DropdownItem 
-                key="add-user" 
-                startContent={<FiUserPlus size={16} />}
-                textValue="Добавить участника"
-              >
-                Добавить участника
-              </DropdownItem>
-              
-              <DropdownItem 
-                key="remove-user" 
-                startContent={<FiUserMinus size={16} />}
-                textValue="Удалить участника"
-              >
-                Удалить участника
-              </DropdownItem>
-              
-              <DropdownItem 
-                key="grant-rights" 
-                startContent={<FiBookOpen size={16} />}
-                textValue="Назначить задание"
-              >
-                Назначить задание
-              </DropdownItem>
-              
-              <DropdownItem 
-                key="delete-group" 
-                startContent={<FiTrash2 size={16} />}
-                className="text-danger"
-                textValue="Удалить группу"
-              >
-                Удалить группу
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        );
-      
-      default:
-        return null;
-    }
-  };
-
-  const renderAccessGroupsCell = (group: GroupWithTasks, columnKey: React.Key) => {
-    switch (columnKey) {
-      case "group_number":
-        return (
-          <div className="flex items-center gap-2">
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
-              onClick={() => toggleGroupExpand(group.hash_code_login)}
-            >
-              {expandedGroups[group.hash_code_login] ? <FiChevronUp /> : <FiChevronDown />}
-            </Button>
-            <span className="font-medium">{group.group_number}</span>
-          </div>
-        );
-      case "hash_code":
-        return (
-          <div className="flex items-center gap-2">
-            <span className="font-mono">{group.hash_code_login}</span>
-            <CustomButton 
-              size="sm" 
-              variant="ghost" 
-              icon={<FiCopy size={14} />}
-              onClick={() => navigator.clipboard.writeText(group.hash_code_login)}
-            />
-          </div>
-        );
-      case "tasks":
-        return <Badge color="secondary">{group.tasks.length}</Badge>;
-      case "status":
-        return <Badge color="success">Доступ предоставлен</Badge>;
-      case "actions":
-        return (
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                size="sm"
-                variant="ghost"
-                aria-label="Действия с группой"
-              >
-                <FiMoreHorizontal size={16} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu 
-              aria-label="Действия с группой"
-              onAction={(key) => {
-                switch (key) {
-                  case "grant-rights":
-                    setSelectedGroupWithTasks(group);
-                    setIsChangeIsOpenModal(true);
-                    break;
-                }
-              }}
-            >
-              <DropdownItemWithIcon 
-                key="grant-rights" 
-                icon={<FiBookOpen size={16} />}
-                text="Назначить задание"
-              />
-            </DropdownMenu>
-          </Dropdown>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const CustomEmptyState = ({ 
+  const EmptyState = ({ 
     icon, 
     title, 
     description, 
@@ -519,184 +337,303 @@ export const ModifyGroup = () => {
     description: string;
     action?: React.ReactNode;
   }) => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="text-gray-400 mb-4">{icon}</div>
+    <motion.div 
+      className="flex flex-col items-center justify-center py-12 text-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <div className="text-default-400 mb-4 text-4xl">{icon}</div>
       <h3 className="text-lg font-medium mb-1">{title}</h3>
-      <p className="text-gray-500 mb-4">{description}</p>
+      <p className="text-default-500 mb-4">{description}</p>
       {action}
-    </div>
+    </motion.div>
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Управление группами</h1>
-        <CustomButton 
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="container mx-auto px-4 py-8 max-w-7xl"
+    >
+      <motion.div 
+        variants={slideUp}
+        className="flex justify-between items-center mb-8"
+      >
+        <div className="flex items-center gap-3">
+          <Avatar
+            icon={<FiUsers className="text-lg" />}
+            className="bg-primary-100 text-primary-500"
+          />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">Управление группами</h1>
+        </div>
+        <Button 
           color="primary" 
           onClick={() => setIsCreateModalOpen(true)}
-          icon={<FiPlus size={18} />}
+          endContent={<FiPlus size={18} />}
+          className="font-medium"
         >
           Создать группу
-        </CustomButton>
-      </div>
+        </Button>
+      </motion.div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FiUsers size={20} /> Мои группы
-          </h2>
-        </CardHeader>
-        <CardBody>
-          {isLoadingGroups ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-          ) : isGroupsError ? (
-            <CustomEmptyState
-              icon={<FiAlertCircle size={48} className="text-danger" />}
-              title="Ошибка загрузки"
-              description="Не удалось загрузить список групп"
-              action={
-                <CustomButton color="primary" onClick={() => refetchGroups()}>
-                  Попробовать снова
-                </CustomButton>
-              }
-            />
-          ) : myGroups?.length === 0 ? (
-            <CustomEmptyState
-              icon={<FiMail size={48}/>}
-              title="Нет групп"
-              description="У вас пока нет созданных групп"
-            />
-          ) : (
-            <Accordion selectionMode="multiple" className="space-y-2 rounded-lg "       
-            showDivider={true}
-            variant="shadow">
-              {(myGroups || []).map((group) => (
-                <AccordionItem
-                  key={group.hash_code_login}
-                  aria-label={group.group_number}
-                  title={group.group_number}
-                  subtitle={'Количество участников: ' + group.users.length}
-                  startContent={<FiUsers className="text-danger" />}
-                  classNames={{base: 'border-top-width-0'}}
-                >
-                  <div className="p-4 ">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h3 className="font-medium mb-2 flex items-center gap-2">
-                            <FiUsers size={16} /> Код доступа
-                          </h3>
-                          {renderMyGroupsCell(group, myGroupsColumns[1].uid)}
+      {/* Мои группы */}
+      <motion.div variants={slideUp}>
+        <Card className="mb-8 shadow-lg" >
+          <CardHeader className="border-b border-default-200 p-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <FiUsers className="text-primary" /> Мои группы
+            </h2>
+          </CardHeader>
+          <CardBody className="p-0">
+            {isLoadingGroups ? (
+              <div className="flex justify-center py-12">
+                <Spinner size="lg" />
+              </div>
+            ) : isGroupsError ? (
+              <EmptyState
+                icon={<FiAlertCircle className="text-danger" />}
+                title="Ошибка загрузки"
+                description="Не удалось загрузить список групп"
+                action={
+                  <Button color="primary" onClick={() => refetchGroups()}>
+                    Попробовать снова
+                  </Button>
+                }
+              />
+            ) : myGroups?.length === 0 ? (
+              <EmptyState
+                icon={<FiUsers className="text-default-400" />}
+                title="Нет групп"
+                description="У вас пока нет созданных групп"
+              />
+            ) : (
+              <Accordion 
+                selectionMode="multiple" 
+                variant="shadow"
+                itemClasses={{
+                  base: "border-none",
+                  heading: "px-6 py-4",
+                  trigger: "py-4",
+                  content: "px-6 pb-6"
+                }}
+              >
+                {myGroups?.map((group) => (
+                  <AccordionItem
+                    key={group.hash_code_login}
+                    aria-label={group.group_number}
+                    title={
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{group.group_number}</span>
+                        <div className="flex items-center gap-3">
+                          <Badge color="primary" content={group.users.length} size="sm">
+                            <FiUsers className="text-default-500" />
+                          </Badge>
+                          <Badge color="secondary" content={group.tasks.length} size="sm">
+                            <FiBookOpen className="text-default-500" />
+                          </Badge>
                         </div>
+                      </div>
+                    }
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
                         <div>
                           <h3 className="font-medium mb-2 flex items-center gap-2">
-                            <FiUsers size={16} /> Действия с группой
+                            <FiKey /> Код доступа
                           </h3>
-                          <div className="rounded-lg divide-y">
-                          {renderMyGroupsCell(group, myGroupsColumns[4].uid)}
+                          <div className="flex items-center gap-2 p-3 bg-default-100 rounded-lg">
+                            <code className="font-mono">{group.hash_code_login}</code>
+                            <Button
+                              isIconOnly
+                              size="sm"
+                              variant="light"
+                              onClick={() => navigator.clipboard.writeText(group.hash_code_login)}
+                            >
+                              <FiCopy size={16} />
+                            </Button>
                           </div>
                         </div>
+
                         <div>
                           <h3 className="font-medium mb-2 flex items-center gap-2">
-                            <FiUsers size={16} /> Участники ({group.users.length})
+                            <FiUsers /> Участники ({group.users.length})
                           </h3>
                           {group.users.length > 0 ? (
-                            <div className="border rounded-lg divide-y ">
+                            <Card className="divide-y">
                               {group.users.map(renderUserItem)}
-                            </div>
+                            </Card>
                           ) : (
-                            <p className=" text-sm">Нет участников</p>
+                            <p className="text-default-500 text-sm p-3">Нет участников</p>
                           )}
                         </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-medium mb-2 flex items-center gap-2">
+                            <FiBookOpen /> Доступные задания
+                          </h3>
+                          {group.tasks.length > 0 ? (
+                            <Card className="divide-y">
+                              {group.tasks.map(task => renderTaskItem(task, group))}
+                            </Card>
+                          ) : (
+                            <p className="text-default-500 text-sm p-3">Нет доступных заданий</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="font-medium mb-2 flex items-center gap-2">
+                            <FiMoreVertical /> Действия
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <Button
+                              color="primary"
+                              variant="flat"
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setIsAddUserModalOpen(true);
+                              }}
+                              startContent={<FiUserPlus />}
+                              fullWidth
+                            >
+                              Добавить участника
+                            </Button>
+                            <Button
+                              color="warning"
+                              variant="flat"
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setIsRemoveUserModalOpen(true);
+                              }}
+                              startContent={<FiUserMinus />}
+                              fullWidth
+                            >
+                              Удалить участника
+                            </Button>
+                            <Button
+                              color="secondary"
+                              variant="flat"
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setIsGrantRightsModalOpen(true);
+                              }}
+                              startContent={<FiBookOpen />}
+                              fullWidth
+                            >
+                              Назначить задание
+                            </Button>
+                            <Button
+                              color="danger"
+                              variant="flat"
+                              onClick={() => {
+                                setSelectedGroup(group);
+                                setIsConfirmDeleteGroupModalOpen(true);
+                              }}
+                              startContent={<FiTrash2 />}
+                              fullWidth
+                            >
+                              Удалить группу
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
+
+      {/* Группы с доступом */}
+      <motion.div variants={slideUp}>
+        <Card className="shadow-lg">
+          <CardHeader className="border-b border-default-200 p-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <FiUnlock className="text-success" /> Группы с доступом
+            </h2>
+          </CardHeader>
+          <CardBody className="p-0">
+            {isLoadingAccess ? (
+              <div className="flex justify-center py-12">
+                <Spinner size="lg" />
+              </div>
+            ) : isAccessError ? (
+              <EmptyState
+                icon={<FiAlertCircle className="text-danger" />}
+                title="Ошибка загрузки"
+                description="Не удалось загрузить список групп с доступом"
+              />
+            ) : myAccess?.length === 0 ? (
+              <EmptyState
+                icon={<FiUnlock className="text-default-400" />}
+                title="Нет доступных групп"
+                description="У вас нет доступа к другим группам"
+              />
+            ) : (
+              <Accordion 
+                selectionMode="multiple" 
+                variant="shadow"
+                itemClasses={{
+                  base: "border-none",
+                  heading: "px-6 py-4",
+                  trigger: "py-4",
+                  content: "px-6 pb-6"
+                }}
+              >
+                {myAccess?.map((group) => (
+                  <AccordionItem
+                    key={group.hash_code_login}
+                    aria-label={group.group_number}
+                    title={
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{group.group_number}</span>
+                        <Badge color="secondary" content={group.tasks.length} size="sm">
+                          <FiBookOpen className="text-default-500" />
+                        </Badge>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-3 bg-default-100 rounded-lg">
+                        <FiKey className="text-primary" />
+                        <code className="font-mono">{group.hash_code_login}</code>
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          variant="light"
+                          onClick={() => navigator.clipboard.writeText(group.hash_code_login)}
+                          className="ml-auto"
+                        >
+                          <FiCopy size={16} />
+                        </Button>
+                      </div>
+
                       <div>
-                        <h3 className="font-medium mb-2 flex items-center gap-2 ">
-                          <FiBookOpen size={16} /> Доступные задания
+                        <h3 className="font-medium mb-2 flex items-center gap-2">
+                          <FiBookOpen /> Доступные задания ({group.tasks.filter(t => t.is_open).length})
                         </h3>
                         {group.tasks.length > 0 ? (
-                          <div className="border rounded-lg divide-y ">
-                            {group.tasks.map(task => renderTaskItemWithoutStatus(task))}
-                          </div>
+                          <Card className="divide-y">
+                            {group.tasks.map(task => renderTaskItem(task, group, true))}
+                          </Card>
                         ) : (
-                          <p className=" text-sm">Нет доступных заданий</p>
+                          <p className="text-default-500 text-sm p-3">Нет доступных заданий</p>
                         )}
                       </div>
- 
                     </div>
-                  </div>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
-        </CardBody>
-      </Card>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <FiUnlock size={20} /> Группы с доступом
-          </h2>
-        </CardHeader>
-        <CardBody>
-          {isLoadingAccess ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-          ) : isAccessError ? (
-            <CustomEmptyState
-              icon={<FiAlertCircle size={48} className="text-danger" />}
-              title="Ошибка загрузки"
-              description="Не удалось загрузить список групп с доступом"
-            />
-          ) : myAccess?.length === 0 ? (
-            <CustomEmptyState
-              icon={<FiUnlock size={48} className="text-gray-400" />}
-              title="Нет доступных групп"
-              description="У вас нет доступа к другим группам"
-            />
-          ) : (
-            <Accordion selectionMode="multiple" className="space-y-2 rounded-lg "       
-            showDivider={true}
-            variant="shadow">
-              {(myAccess || []).map((group) => (
-                <AccordionItem
-                key={group.hash_code_login}
-                aria-label={group.group_number}
-                title={group.group_number}
-                subtitle={'Количество выданных прав на задания: ' + group.tasks.length}
-                startContent={<FiUsers className="text-danger" />}
-                classNames={{base: 'border-top-width-0'}}
-                >
-                  <div className="p-4 ">
-                    <div className="w-full">
-                            {(myAccess || []).map((group) => (
-                              <TableRow key={group.hash_code_login}>
-                                {accessGroupsColumns.map((column) => (
-                                  <TableCell key={`${group.hash_code_login}-${column.uid}`}>
-                                    {renderAccessGroupsCell(group, 0) as React.ReactNode}
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))}
-                      </div>
-                    <h3 className="font-medium mb-2 flex items-center gap-2">
-                      <FiBookOpen size={16} /> Доступные задания ({group.tasks.filter(task => task.is_open).length})
-                    </h3>
-                    {group.tasks.length > 0 ? (
-                      <div className="border rounded-lg divide-y">
-                        {group.tasks.map(task => renderTaskItem(task, group, true))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">Нет доступных заданий</p>
-                    )}
-                  </div>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
-        </CardBody>
-      </Card>
-
+      {/* Модальные окна */}
       <CreateGroupModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -729,14 +666,14 @@ export const ModifyGroup = () => {
         tasks={availableTasks || []}
       />
 
-        <ConfirmDeleteGroupModal
+      <ConfirmDeleteGroupModal
         isOpen={isConfirmDeleteGroupModalOpen}
         onClose={() => setIsConfirmDeleteGroupModalOpen(false)}
         onDelete={handleDeleteGroup}
         group={selectedGroup}
       />
 
-        <ConfirmChangeIsOpen
+      <ConfirmChangeIsOpen
         isOpen={isChangeIsOpenModal}
         onClose={() => setIsChangeIsOpenModal(false)}
         onChange={handleChangeIsOpen}
@@ -749,6 +686,6 @@ export const ModifyGroup = () => {
         onClose={() => setIsErrorModalOpen(false)} 
         errorMessage={errorMessage} 
       />
-    </div>
+    </motion.div>
   );
 };
