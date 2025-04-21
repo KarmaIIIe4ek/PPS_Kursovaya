@@ -48,12 +48,14 @@ import {
   FiArrowRight,
   FiPlayCircle,
   FiGithub,
-  FiMail
+  FiMail,
+  FiPhone
 } from 'react-icons/fi';
-import { FaFlask, FaAtom, FaVial } from 'react-icons/fa';
+import { FaFlask, FaAtom, FaVial, FaTelegram, FaVk } from 'react-icons/fa';
 import { SiReact, SiTypescript, SiNodedotjs, SiPostgresql, SiDocker } from 'react-icons/si';
 import { Button } from '../../components/button';
 import watermark from '../../public/images/watermark.svg'
+import lab_img from '../../public/images/photo-1532094349884-543bc11b234d.jpg'
 
 // Анимационные конфиги
 const container = {
@@ -164,10 +166,10 @@ export const Main = () => {
   ];
 
   const stats = [
-    { label: "Студентов", value: "5K+", change: "+18%" },
-    { label: "Преподавателей", value: "200+", change: "+10%" },
-    { label: "Проведенных опытов", value: "50K+", change: "+35%" },
-    { label: "Учебных заведений", value: "100+", change: "+15%" }
+    { label: "Студентов", value: "5K+", change: "+18% за год" },
+    { label: "Преподавателей", value: "200+", change: "+10%  за год" },
+    { label: "Проведенных опытов", value: "20K+", change: "+35%  за год" },
+    { label: "Учебных заведений", value: "100+", change: "+15%  за год" }
   ];
 
   const technologies = [
@@ -208,14 +210,14 @@ export const Main = () => {
                 с автоматической оценкой результатов и детальной аналитикой.
               </p>
               <div className="flex flex-wrap gap-4">
-                <ButtonCustom 
-                  color="primary" 
+                <Button 
                   size="lg" 
                   endIcon={<FiArrowRight />}
-                  className="px-8"
+                  className="px-8 bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg"
+                  href='/auth'
                 >
                   Попробовать демо
-                </ButtonCustom>
+                </Button>
                 <Button 
                   variant="flat" 
                   size="lg" 
@@ -239,11 +241,11 @@ export const Main = () => {
               <div className="absolute -bottom-10 -right-10 w-72 h-72 bg-secondary rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
               <div className="absolute top-0 left-1/2 w-72 h-72 bg-danger rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
               <div className="relative rounded-2xl bg-white dark:bg-default-100 shadow-2xl overflow-hidden border border-default-200">
-                <Image
-                  src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
-                  alt="Виртуальная лаборатория"
-                  className="w-full h-auto"
-                />
+              <Image
+                src={lab_img}
+                alt="Виртуальная лаборатория"
+                className="w-full h-auto"
+              />
               </div>
             </motion.div>
           </div>
@@ -526,7 +528,7 @@ export const Main = () => {
                 color="white" 
                 size="lg" 
                 endIcon={<FiArrowRight />}
-                className="px-8"
+                className="px-8 bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg"
                 href='/auth'
               >
                 Зарегистрироваться
@@ -594,23 +596,37 @@ export const Main = () => {
                 >
                   Github
                 </Button></li>
-                <li><Link color="foreground" href="#">Документация</Link></li>
               </ul>
             </motion.div>
             
             <motion.div variants={item}>
               <h3 className="font-semibold text-lg mb-4">Контакты</h3>
-              <p className="text-default-600 mb-4">
-                По вопросам сотрудничества и поддержки
-              </p>
-              <Button 
-                color="primary" 
-                variant="flat" 
-                startIcon={<FiMail />}
-                className="w-full"
-              >
-                Написать нам
-              </Button>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FiMail />
+                  <Link href="mailto:nik.yuragin2016@yandex.ru" color="foreground">
+                    nik.yuragin2016@yandex.ru
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FiPhone />
+                  <Link href="tel:+79385041041" color="foreground">
+                    +7 (938) 504-10-41
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaTelegram />
+                  <Link href="https://t.me/YuraginNV" target="_blank" color="foreground">
+                    Telegram
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FaVk />
+                  <Link href="https://vk.com/karmaiiie4ek" target="_blank" color="foreground">
+                    ВКонтакте
+                  </Link>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
           
@@ -626,8 +642,8 @@ export const Main = () => {
               © 2025 ВиртЛаб. Все права защищены.
             </p>
             <div className="flex gap-4">
-              <Link color="foreground" href="#" size="sm">Условия</Link>
-              <Link color="foreground" href="#" size="sm">Конфиденциальность</Link>
+              <Link color="foreground" size="sm">Условия</Link>
+              <Link color="foreground" size="sm">Конфиденциальность</Link>
             </div>
           </motion.div>
         </div>

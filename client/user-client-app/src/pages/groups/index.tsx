@@ -17,6 +17,10 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
+  Chip,
+  Avatar,
+  Badge,
+  Button as NextButton,
   useDisclosure
 } from '@heroui/react';
 import { 
@@ -32,11 +36,29 @@ import {
   FiUser,
   FiMail,
   FiShield,
-  FiAlertCircle
+  FiAlertCircle,
+  FiCalendar,
+  FiKey
 } from 'react-icons/fi';
 import { EmptyState } from '../../components/empty-state';
 import { ErrorModal } from '../../components/error-modal';
-import { Button } from '../../components/button';
+import { motion } from 'framer-motion';
+
+// Анимационные варианты
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5 } }
+};
+
+const slideUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+const scaleUp = {
+  hidden: { opacity: 1, scale: 1 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+};
 
 export const GroupPage = () => {
   const [hashCodeInput, setHashCodeInput] = useState('');
@@ -44,7 +66,6 @@ export const GroupPage = () => {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   
-  // Получаем группы, где студент является участником
   const { 
     data: groups, 
     isLoading, 
@@ -52,9 +73,8 @@ export const GroupPage = () => {
     refetch 
   } = useGetGroupsWhereIAmMemberQuery();
   
-  // Мутации для добавления/удаления себя из группы
-  const [addToGroup] = useAddSelfToGroupMutation();
-  const [removeFromGroup] = useRemoveSelfFromGroupMutation();
+  const [addToGroup, { isLoading: isAdding }] = useAddSelfToGroupMutation();
+  const [removeFromGroup, { isLoading: isRemoving }] = useRemoveSelfFromGroupMutation();
 
   const handleAddToGroup = async () => {
     try {
@@ -91,30 +111,56 @@ export const GroupPage = () => {
   const getRoleBadge = (role: string) => {
     switch(role.toLowerCase()) {
       case 'teacher':
-        return <div color="primary" className="flex items-center gap-1" content=''><FiShield /> Преподаватель</div>;
+        return (
+          <Chip 
+            color="primary" 
+            variant="flat"
+            startContent={<FiShield className="text-lg" />}
+          >
+            Преподаватель
+          </Chip>
+        );
       default:
-        return <div className="flex items-center gap-1" content=''><FiUser /> Студент</div>;
+        return (
+          <Chip 
+            variant="flat"
+            startContent={<FiUser className="text-lg" />}
+          >
+            Студент
+          </Chip>
+        );
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <FiUsers size={24} /> Мои группы
-      </h1>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="container mx-auto px-4 py-8 max-w-6xl"
+    >
+      <motion.div variants={slideUp} className="flex items-center gap-3 mb-8 ">
+        <Avatar
+          icon={<FiUsers className="text-lg" />}
+          className="bg-primary-100 text-primary-500"
+        />
+        
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">Мои группы</h1>
+      </motion.div>
 
-      <div className="flex justify-end mb-6">
-        <Button 
+      <motion.div variants={slideUp} className="flex justify-end mb-6">
+        <NextButton 
           color="primary" 
           onClick={onOpen}
-          icon={<FiPlus />}
+          endContent={<FiPlus />}
+          className="font-medium"
         >
           Вступить в группу
-        </Button>
-      </div>
+        </NextButton>
+      </motion.div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center items-center py-12">
           <Spinner size="lg" />
         </div>
       ) : isError ? (
@@ -123,9 +169,9 @@ export const GroupPage = () => {
           title="Ошибка загрузки"
           description="Не удалось загрузить список групп"
           action={
-            <Button color="primary" onClick={refetch}>
+            <NextButton color="primary" onClick={refetch}>
               Попробовать снова
-            </Button>
+            </NextButton>
           }
         />
       ) : groups?.length === 0 ? (
@@ -135,97 +181,151 @@ export const GroupPage = () => {
           description="Вы пока не состоите ни в одной группе"
         />
       ) : (
-        <div className="space-y-6">
+        <motion.div className="space-y-6">
           {groups?.map((group) => (
-            <Card key={group.id_group}>
-              <CardHeader>
-                <div className="flex justify-between w-[100%] items-center">
-                  <div>
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                      <FiHash /> {group.group_number}
-                    </h2>
-                    <div className="text-sm text-default-500">
-                      Создана: {formatDate(group.created_at)} | Код: {group.hash_code_login}
+            <motion.div 
+              key={group.id_group}
+              variants={scaleUp}
+              whileHover={{ scale: 1.005 }}
+            >
+              <Card className="shadow-lg">
+                <CardHeader className="border-b border-default-200 p-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <FiHash /> {group.group_number}
+                      </h2>
+                      <div className="flex items-center gap-2 text-sm text-default-500 mt-1">
+                        <FiCalendar /> Создана: {formatDate(group.created_at)}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-default-500 mt-1">
+                        Код: {group.hash_code_login}
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <NextButton
+                        color="danger"
+                        variant="flat"
+                        onClick={() => handleRemoveFromGroup(group.hash_code_login)}
+                        endContent={<FiTrash2 />}
+                        isLoading={isRemoving}
+                      >
+                        Покинуть группу
+                      </NextButton>
                     </div>
                   </div>
-                  <Button
-                    color="danger"
-                    size="md"
-                    onClick={() => handleRemoveFromGroup(group.hash_code_login)}
-                    icon={<FiTrash2 />}
+                </CardHeader>
+                <CardBody className="p-6">
+                  <div className="mb-6">
+                    <h3 className="font-medium mb-3">Преподаватель:</h3>
+                    <div className="flex items-center gap-3 p-3 bg-default-100 rounded-lg">
+                      <Avatar
+                        name={`${group.creator.lastname} ${group.creator.firstname}`}
+                        className="bg-primary-100 text-primary-500"
+                      />
+                      <div>
+                        <div className="font-medium">
+                          {group.creator.lastname} {group.creator.firstname} {group.creator.middlename || ''}
+                        </div>
+                        <div className="text-sm text-default-500 flex items-center gap-1">
+                          <FiMail /> {group.creator.email}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Divider className="my-4" />
+
+                  <h3 className="font-medium mb-4">Участники группы ({group.members.length}):</h3>
+                  <Table 
+                    aria-label="Group members table" 
+                    removeWrapper
+                    classNames={{
+                      th: "bg-default-100",
+                      tr: "hover:bg-default-100 transition-colors"
+                    }}
                   >
-                    Покинуть группу
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardBody>
-                <div className="mb-4">
-                  <h3 className="font-medium mb-2">Преподаватель:</h3>
-                  <div className="flex items-center gap-2 p-2 bg-default-100 rounded-lg">
-                    <div className="font-medium">
-                      {group.creator.lastname} {group.creator.firstname} {group.creator.middlename || ''}
-                    </div>
-                  </div>
-                </div>
-
-                <Divider className="my-4" />
-
-                <h3 className="font-medium mb-3">Участники группы:</h3>
-                <Table aria-label="Group members table">
-                  <TableHeader>
-                    <TableColumn>ФИО</TableColumn>
-                    <TableColumn>Email</TableColumn>
-                    <TableColumn>Роль</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {group.members.map((member) => (
-                      <TableRow key={member.id_user}>
-                        <TableCell>
-                          {member.lastname} {member.firstname} {member.middlename || ''}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <FiMail /> {member.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getRoleBadge(member.role_name)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardBody>
-            </Card>
+                    <TableHeader>
+                      <TableColumn>ФИО</TableColumn>
+                      <TableColumn>Email</TableColumn>
+                      <TableColumn>Роль</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {group.members.map((member) => (
+                        <TableRow key={member.id_user}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar
+                                name={`${member.lastname} ${member.firstname}`}
+                                size="sm"
+                                className="bg-default-100"
+                              />
+                              <div>
+                                {member.lastname} {member.firstname} {member.middlename || ''}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <FiMail /> {member.email}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getRoleBadge(member.role_name)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardBody>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Модальное окно для вступления в группу */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} placement="center">
         <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">Вступить в группу</ModalHeader>
-          <ModalBody>
-            <Input
-              label="Код группы (hash_code_login)"
-              placeholder="Введите код группы"
-              value={hashCodeInput}
-              onChange={(e) => setHashCodeInput(e.target.value)}
-              description="Получите код группы у преподавателя"
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button color="secondary" onClick={onClose}>
-              Отмена
-            </Button>
-            <Button 
-              color="primary" 
-              onClick={handleAddToGroup}
-              isDisabled={!hashCodeInput.trim()}
-            >
-              Вступить
-            </Button>
-          </ModalFooter>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1 p-6 border-b border-default-200">
+                <div className="flex items-center gap-2">
+                  <FiKey className="text-primary" /> Вступить в группу
+                </div>
+              </ModalHeader>
+              <ModalBody className="p-6">
+                <Input
+                  label="Код группы"
+                  labelPlacement="outside"
+                  placeholder="Введите код группы"
+                  value={hashCodeInput}
+                  onChange={(e) => setHashCodeInput(e.target.value)}
+                  description="Получите код группы у преподавателя"
+                  startContent={
+                    <FiHash className="text-default-400" />
+                  }
+                  classNames={{
+                    input: "text-base",
+                    label: "text-base font-medium"
+                  }}
+                />
+              </ModalBody>
+              <ModalFooter className="p-6 border-t border-default-200">
+                <NextButton color="default" variant="light" onClick={onClose}>
+                  Отмена
+                </NextButton>
+                <NextButton 
+                  color="primary" 
+                  onClick={handleAddToGroup}
+                  isDisabled={!hashCodeInput.trim()}
+                  isLoading={isAdding}
+                >
+                  Вступить
+                </NextButton>
+              </ModalFooter>
+            </>
+          )}
         </ModalContent>
       </Modal>
 
@@ -234,6 +334,6 @@ export const GroupPage = () => {
         onClose={() => setIsErrorModalOpen(false)} 
         errorMessage={errorMessage} 
       />
-    </div>
+    </motion.div>
   );
 };

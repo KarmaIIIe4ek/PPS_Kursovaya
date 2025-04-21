@@ -12,11 +12,12 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Tooltip,
   Tabs,
   Tab,
   Avatar,
-  Chip
+  Chip,
+  Progress,
+  Tooltip
 } from '@heroui/react';
 import { 
   useGetSelfAtemptQuery
@@ -32,6 +33,23 @@ import {
   FiUser
 } from 'react-icons/fi';
 import { EmptyState } from '../../components/empty-state';
+import { motion } from 'framer-motion';
+
+// Анимационные варианты
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5 } }
+};
+
+const slideUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+const scaleUp = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+};
 
 export const SelfResultsPage = () => {
   const { data: tasksData, isLoading, isError } = useGetSelfAtemptQuery();
@@ -48,7 +66,6 @@ export const SelfResultsPage = () => {
     });
   };
   
-  // Функция для расчета времени выполнения
   const calculateDuration = (start: string, finish: string | null) => {
     if (!finish) return '-';
     
@@ -69,8 +86,8 @@ export const SelfResultsPage = () => {
         return (
           <Chip 
             color="success" 
-            startContent={<FiCheckCircle className="text-current" />}
             variant="flat"
+            startContent={<FiCheckCircle className="text-lg" />}
           >
             Завершено
           </Chip>
@@ -79,28 +96,28 @@ export const SelfResultsPage = () => {
         return (
           <Chip
             color="warning"
-            startContent={<FiClock className="text-current" />}
             variant="flat"
+            startContent={<FiClock className="text-lg" />}
           >
             В процессе
           </Chip>
         );
-        case 'not_started':
-          return (
-            <Chip
-              color="default"
-              startContent={<FiClock className="text-current" />}
-              variant="flat"
-            >
-              Не начато
-            </Chip>
-          );
+      case 'not_started':
+        return (
+          <Chip
+            color="default"
+            variant="flat"
+            startContent={<FiClock className="text-lg" />}
+          >
+            Не начато
+          </Chip>
+        );
       default:
         return (
           <Chip
             color="danger"
-            startContent={<FiAlertCircle className="text-current" />}
             variant="flat"
+            startContent={<FiAlertCircle className="text-lg" />}
           >
             Ошибка
           </Chip>
@@ -108,9 +125,10 @@ export const SelfResultsPage = () => {
     }
   };
 
-  // Подсчет общей статистики
+  // Статистика
   const totalAttempts = tasksData?.reduce((sum, task) => sum + task.attempts.length, 0) || 0;
   const completedTasks = tasksData?.filter(task => task.status === 'completed').length || 0;
+  const totalTasks = tasksData?.length || 1;
   const averageScore = tasksData?.reduce((sum, task) => {
     const completedAttempt = task.attempts.find(a => a.status === 'completed' && a.score);
     return sum + (completedAttempt?.score || 0);
@@ -118,7 +136,7 @@ export const SelfResultsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl flex justify-center">
+      <div className="container mx-auto px-4 py-8 max-w-6xl flex justify-center items-center h-64">
         <Spinner size="lg" />
       </div>
     );
@@ -126,182 +144,264 @@ export const SelfResultsPage = () => {
 
   if (isError) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="container mx-auto px-4 py-8 max-w-6xl"
+      >
         <EmptyState
           icon={<FiAlertCircle className="text-danger" size={48} />}
           title="Ошибка загрузки"
           description="Не удалось загрузить ваши результаты"
         />
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <FiBook /> Мои результаты
-      </h1>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="container mx-auto px-4 py-8 max-w-6xl"
+    >
+      <motion.div variants={slideUp} className="flex items-center gap-3 mb-8">
+        <Avatar
+          icon={<FiBook className="text-lg" />}
+          className="bg-primary-100 text-primary-500"
+        />
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">Мои результаты</h1>
+      </motion.div>
 
-      <Card className="mb-6">
-        <CardHeader className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Общая информация</h2>
-          <Badge 
-            content={totalAttempts}
-            color="primary"
-            shape="circle"
-            size="lg"
-          >
-            <Avatar
-              icon={<FiAward className="text-default-600" />}
-              className="bg-primary-100"
-            />
-          </Badge>
-        </CardHeader>
-        <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-default-100 p-4">
-              <div className="text-sm text-default-600">Заданий доступно</div>
-              <div className="text-2xl font-bold">{tasksData?.length || 0}</div>
-            </Card>
-            <Card className="bg-default-100 p-4">
-              <div className="text-sm text-default-600">Завершено</div>
-              <div className="text-2xl font-bold">{completedTasks}</div>
-            </Card>
-            <Card className="bg-default-100 p-4">
-              <div className="text-sm text-default-600">Средний балл</div>
-              <div className="text-2xl font-bold">
-                {completedTasks > 0 ? averageScore.toFixed(1) : 'Нет данных'}
-              </div>
-            </Card>
-          </div>
-        </CardBody>
-      </Card>
+      {/* Общая статистика */}
+      <motion.div variants={slideUp}>
+        <Card className="mb-6 shadow-lg">
+          <CardHeader className="border-b border-default-200 flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Общая информация</h2>
+            <Badge 
+              content={totalAttempts}
+              color="primary"
+              shape="circle"
+              size="lg"
+            >
+              <Avatar
+                icon={<FiAward className="text-lg" />}
+                className="bg-primary-100 text-primary-500"
+              />
+            </Badge>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <motion.div variants={scaleUp}>
+                <Card className="p-4 bg-default-100 hover:bg-default-200 transition-colors">
+                  <div className="text-sm text-default-600 mb-1">Заданий доступно</div>
+                  <div className="text-2xl font-bold">{tasksData?.length || 0}</div>
+                  <Progress 
+                    value={100} 
+                    size="sm" 
+                    className="mt-2"
+                  />
+                </Card>
+              </motion.div>
+              
+              <motion.div variants={scaleUp}>
+                <Card className="p-4 bg-default-100 hover:bg-default-200 transition-colors">
+                  <div className="text-sm text-default-600 mb-1">Завершено</div>
+                  <div className="text-2xl font-bold">{completedTasks}</div>
+                  <Progress 
+                    value={(completedTasks / totalTasks) * 100} 
+                    color="success"
+                    size="sm" 
+                    className="mt-2"
+                  />
+                </Card>
+              </motion.div>
+              
+              <motion.div variants={scaleUp}>
+                <Card className="p-4 bg-default-100 hover:bg-default-200 transition-colors">
+                  <div className="text-sm text-default-600 mb-1">Средний балл</div>
+                  <div className="text-2xl font-bold">
+                    {completedTasks > 0 ? averageScore.toFixed(1) : '—'}
+                  </div>
+                  <Progress 
+                    value={completedTasks > 0 ? averageScore * 10 : 0} 
+                    color="primary"
+                    size="sm" 
+                    className="mt-2"
+                  />
+                </Card>
+              </motion.div>
+            </div>
+          </CardBody>
+        </Card>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Детализация результатов</h2>
-        </CardHeader>
-        <CardBody>
-          {tasksData?.length === 0 ? (
-            <EmptyState
-              icon={<FiList className="text-default-400" size={48} />}
-              title="Нет данных о заданиях"
-              description="У вас пока нет доступных заданий"
-            />
-          ) : (
-            <Tabs aria-label="Results tabs">
-              <Tab key="tasks" title="По заданиям">
-                <div className="mt-4">
-                  <Table aria-label="Tasks table">
-                    <TableHeader>
-                      <TableColumn>Задание</TableColumn>
-                      <TableColumn>Группы</TableColumn>
-                      <TableColumn>Статус</TableColumn>
-                      <TableColumn>Попыток осталось</TableColumn>
-                      <TableColumn>Результат</TableColumn>
-                    </TableHeader>
-                    <TableBody>
-                      {tasksData?.map((taskResult) => {
-                        const lastAttempt = taskResult.attempts[taskResult.attempts.length - 1];
-                        return (
-                          <TableRow key={taskResult.task.id_task}>
-                            <TableCell>
-                              <div className="font-medium">{taskResult.task.task_name}</div>
-                              <div className="text-default-500 text-sm">{taskResult.task.description}</div>
-                            </TableCell>
-                            <TableCell>
-                              {taskResult.groups.map(group => (
-                                <Chip key={group.id_group} variant="flat" className="mr-2 mb-1">
-                                  {group.group_number}
-                                </Chip>
-                              ))}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(taskResult.status)}</TableCell>
-                            <TableCell>
-                              <Badge 
-                                content={taskResult.attempts.length } 
-                                color="primary" 
-                                shape="circle" 
-                                size="lg"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              {lastAttempt?.score ? (
-                                <Badge 
-                                  content={lastAttempt.score} 
-                                  color="success" 
-                                  shape="circle" 
-                                  size="lg"
-                                  
-                                />
-                              ) : (
-                                <Tooltip content="Не начато">
-                                  <span><FiInfo className="text-default-400" /></span>
-                                </Tooltip>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Tab>
-              <Tab key="attempts" title="Все попытки">
-                <div className="mt-4 space-y-6">
-                  {tasksData?.map((taskResult) => (
-                    <div key={taskResult.task.id_task} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-medium text-lg">{taskResult.task.task_name}</h3>
-                        {getStatusBadge(taskResult.status)}
-                      </div>
-                      <p className="text-default-500 mb-4">{taskResult.task.description}</p>
-                      
-                      <Table aria-label="Attempts table">
-                        <TableHeader>
-                          <TableColumn>Дата начала</TableColumn>
-                          <TableColumn>Дата завершения</TableColumn>
-                          <TableColumn>Время выполнения</TableColumn>
-                          <TableColumn>Балл</TableColumn>
-                          <TableColumn>Ваш комментарий</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                          {taskResult.attempts.map((attempt) => (
-                            <TableRow key={attempt.id_result}>
-                              <TableCell>{formatDate(attempt.date_start)}</TableCell>
-                              <TableCell>{formatDate(attempt.date_finish)}</TableCell>
+      {/* Детализация результатов */}
+      <motion.div variants={slideUp}>
+        <Card className="shadow-lg" >
+          <CardHeader className="border-b border-default-200">
+            <h2 className="text-xl font-semibold">Детализация результатов</h2>
+          </CardHeader>
+          <CardBody>
+            {tasksData?.length === 0 ? (
+              <EmptyState
+                icon={<FiList className="text-default-400" size={48} />}
+                title="Нет данных о заданиях"
+                description="У вас пока нет доступных заданий"
+              />
+            ) : (
+              <Tabs aria-label="Results tabs" variant="underlined">
+                <Tab 
+                  key="tasks" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <FiList /> По заданиям
+                    </div>
+                  }
+                >
+                  <div className="mt-4">
+                    <Table 
+                      aria-label="Tasks table" 
+                      removeWrapper
+                      classNames={{
+                        th: "bg-default-100",
+                        tr: "hover:bg-default-100 transition-colors"
+                      }}
+                    >
+                      <TableHeader>
+                        <TableColumn>Задание</TableColumn>
+                        <TableColumn>Группы</TableColumn>
+                        <TableColumn>Статус</TableColumn>
+                        <TableColumn>Попытки</TableColumn>
+                        <TableColumn>Результат</TableColumn>
+                      </TableHeader>
+                      <TableBody>
+                        {tasksData?.map((taskResult) => {
+                          const lastAttempt = taskResult.attempts[taskResult.attempts.length - 1];
+                          return (
+                            <TableRow key={taskResult.task.id_task}>
                               <TableCell>
-                                {calculateDuration(attempt.date_start, attempt.date_finish)}
+                                <div className="font-medium">{taskResult.task.task_name}</div>
+                                <div className="text-default-500 text-sm">{taskResult.task.description}</div>
                               </TableCell>
                               <TableCell>
-                                {attempt.score ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {taskResult.groups.map(group => (
+                                    <Chip 
+                                      key={group.id_group} 
+                                      variant="flat"
+                                      color="primary"
+                                    >
+                                      {group.group_number}
+                                    </Chip>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>{getStatusBadge(taskResult.status)}</TableCell>
+                              <TableCell>
+                                <Badge 
+                                  content={taskResult.attempts.length} 
+                                  color="primary" 
+                                  shape="circle" 
+                                  size="lg"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {lastAttempt?.score ? (
                                   <Badge 
-                                    content={attempt.score} 
+                                    content={lastAttempt.score} 
                                     color="success" 
                                     shape="circle" 
                                     size="lg"
                                   />
                                 ) : (
-                                  <FiInfo className="text-default-400" />
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {attempt.comment_user || (
-                                  <span className="text-default-400">Нет комментария</span>
+                                  <Tooltip content="Не начато">
+                                    <FiInfo className="text-default-400 text-lg" />
+                                  </Tooltip>
                                 )}
                               </TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Tab>
+                
+                <Tab 
+                  key="attempts" 
+                  title={
+                    <div className="flex items-center gap-2">
+                      <FiClock /> Все попытки
                     </div>
-                  ))}
-                </div>
-              </Tab>
-            </Tabs>
-          )}
-        </CardBody>
-      </Card>
-    </div>
+                  }
+                >
+                  <div className="mt-4 space-y-6">
+                    {tasksData?.map((taskResult) => (
+                      <motion.div 
+                        key={taskResult.task.id_task} 
+                        className="border border-default-200 rounded-lg p-5 hover:shadow-sm transition-shadow"
+                        variants={scaleUp}
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-lg text-primary">{taskResult.task.task_name}</h3>
+                          {getStatusBadge(taskResult.status)}
+                        </div>
+                        <p className="text-default-500 mb-4">{taskResult.task.description}</p>
+                        
+                        <Table 
+                          aria-label="Attempts table" 
+                          removeWrapper
+                          classNames={{
+                            th: "bg-default-100",
+                          }}
+                        >
+                          <TableHeader>
+                            <TableColumn>Дата начала</TableColumn>
+                            <TableColumn>Дата завершения</TableColumn>
+                            <TableColumn>Время выполнения</TableColumn>
+                            <TableColumn>Балл</TableColumn>
+                            <TableColumn>Комментарий</TableColumn>
+                          </TableHeader>
+                          <TableBody>
+                            {taskResult.attempts.map((attempt) => (
+                              <TableRow key={attempt.id_result}>
+                                <TableCell>{formatDate(attempt.date_start)}</TableCell>
+                                <TableCell>{formatDate(attempt.date_finish)}</TableCell>
+                                <TableCell>
+                                  {calculateDuration(attempt.date_start, attempt.date_finish)}
+                                </TableCell>
+                                <TableCell>
+                                  {attempt.score ? (
+                                    <Badge 
+                                      content={attempt.score} 
+                                      color="success" 
+                                      shape="circle" 
+                                      size="lg"
+                                    />
+                                  ) : (
+                                    <FiInfo className="text-default-400 text-lg" />
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {attempt.comment_user || (
+                                    <span className="text-default-400">Нет комментария</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </motion.div>
+                    ))}
+                  </div>
+                </Tab>
+              </Tabs>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 };

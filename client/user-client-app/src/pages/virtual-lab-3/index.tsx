@@ -265,7 +265,7 @@ export const VirtualLab3: React.FC = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-      <div className="flex flex-col bg-default-50 p-4 gap-4 h-[90vh]">
+      <div className="flex flex-col bg-default-50 p-4 gap-4 h-[89vh]">
 
         <div className="grid grid-cols-5 gap-4">
           <ChemicalDropdown 

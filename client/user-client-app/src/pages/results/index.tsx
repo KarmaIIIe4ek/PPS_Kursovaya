@@ -19,7 +19,8 @@ import {
   TableCell,
   Tooltip,
   Chip,
-  Avatar
+  Avatar,
+  Progress
 } from '@heroui/react';
 import { 
   useLazyGetGroupAttemptsQuery 
@@ -34,10 +35,29 @@ import {
   FiClock,
   FiAlertCircle,
   FiInfo,
-  FiPlus
+  FiPlus,
+  FiAward,
+  FiUser
 } from 'react-icons/fi';
 import { EmptyState } from '../../components/empty-state';
 import { ErrorModal } from '../../components/error-modal';
+import { motion } from 'framer-motion';
+
+// Анимационные варианты
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5 } }
+};
+
+const slideUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+};
+
+const scaleUp = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
+};
 
 export const ResultsPage = () => {
   const [selectedGroup, setSelectedGroup] = useState<string>('');
@@ -82,8 +102,8 @@ export const ResultsPage = () => {
         return (
           <Chip 
             color="success" 
-            startContent={<FiCheckCircle className="text-current" />}
             variant="flat"
+            startContent={<FiCheckCircle className="text-lg" />}
           >
             Завершено
           </Chip>
@@ -92,8 +112,8 @@ export const ResultsPage = () => {
         return (
           <Chip
             color="warning"
-            startContent={<FiClock className="text-current" />}
             variant="flat"
+            startContent={<FiClock className="text-lg" />}
           >
             В процессе
           </Chip>
@@ -102,8 +122,8 @@ export const ResultsPage = () => {
         return (
           <Chip
             color="default"
-            startContent={<FiPlus className="text-current" />}
             variant="flat"
+            startContent={<FiPlus className="text-lg" />}
           >
             Не начато
           </Chip>
@@ -112,8 +132,8 @@ export const ResultsPage = () => {
         return (
           <Chip
             color="danger"
-            startContent={<FiAlertCircle className="text-current" />}
             variant="flat"
+            startContent={<FiAlertCircle className="text-lg" />}
           >
             Ошибка
           </Chip>
@@ -122,120 +142,163 @@ export const ResultsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        <FiBook /> Результаты студентов
-      </h1>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="container mx-auto px-4 py-8 max-w-6xl"
+    >
+      <motion.div variants={slideUp} className="flex items-center gap-3 mb-8">
+        <Avatar
+          icon={<FiBook className="text-lg" />}
+          className="bg-primary-100 text-primary-500"
+        />
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">Результаты студентов</h1>
+      </motion.div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">Выбор группы</h2>
-        </CardHeader>
-        <CardBody>
-          {isLoadingGroups ? (
-            <div className="flex justify-center">
-              <Spinner size="lg" />
-            </div>
-          ) : groups?.length === 0 ? (
-            <EmptyState
-              icon={<FiUsers className="text-default-400" size={48} />}
-              title="Нет доступных групп"
-              description="У вас пока нет созданных групп"
-            />
-          ) : (
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <Select
-                label="Выберите группу"
-                className="min-w-[300px]"
-                selectedKeys={selectedGroup ? [selectedGroup] : []}
-                onChange={(e) => handleGroupChange(e.target.value)}
-              >
-                {groups?.map((group) => (
-                  <SelectItem key={group.hash_code_login} value={group.hash_code_login}>
-                    {group.group_number}
-                  </SelectItem>
-                ))}
-              </Select>
-              
-              {selectedGroup && (
-                <div className="flex items-center gap-4">
-                  <span className="ml-2 mr-5">Студентов:</span>
-                  <Badge 
-                    content={groups?.find(g => g.hash_code_login === selectedGroup)?.users.length || 0}
-                    color="primary"
-                    shape="circle"
-                    size="lg"
-                    className='mr-5'
-                  >
-                    
-                  </Badge>
-                </div>
-              )}
-            </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {selectedGroup && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between w-[100%] items-center">
-              <h2 className="text-xl font-semibold">
-                Результаты группы: {groups?.find(g => g.hash_code_login === selectedGroup)?.group_number}
-              </h2>
-              <div className="flex gap-4">
-              <h2 className="mr-5">Заданий:</h2>
-                <Badge 
-                  content={groupResults?.available_tasks.length || 0}
-                  color="primary"
-                  shape="circle"
-                  size="lg"
-                  className='mt-3 mr-5'
-                />
-
-              </div>
-            </div>
+      <motion.div variants={slideUp}>
+        <Card className="mb-6 shadow-lg">
+          <CardHeader className="border-b border-default-200 p-6">
+            <h2 className="text-xl font-semibold">Выбор группы</h2>
           </CardHeader>
-          <CardBody>
-            {isLoadingResults ? (
-              <div className="flex justify-center py-8">
+          <CardBody className="p-6">
+            {isLoadingGroups ? (
+              <div className="flex justify-center">
                 <Spinner size="lg" />
               </div>
-            ) : isResultsError ? (
+            ) : groups?.length === 0 ? (
               <EmptyState
-                icon={<FiAlertCircle className="text-danger" size={48} />}
-                title="Ошибка загрузки"
-                description="Не удалось загрузить результаты группы"
-                action={
-                  <Button 
-                    color="primary" 
-                    onClick={() => fetchResults(selectedGroup)}
-                  >
-                    Попробовать снова
-                  </Button>
-                }
+                icon={<FiUsers className="text-default-400" size={48} />}
+                title="Нет доступных групп"
+                description="У вас пока нет созданных групп"
               />
             ) : (
-              <Tabs aria-label="Results tabs">
-                <Tab key="students" title="По студентам">
-                  <div className="mt-4">
-                    <Table aria-label="Students results table">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <Select
+                  label="Выберите группу"
+                  className="min-w-[300px]"
+                  selectedKeys={selectedGroup ? [selectedGroup] : []}
+                  onChange={(e) => handleGroupChange(e.target.value)}
+                  variant="bordered"
+                  size="lg"
+                >
+                  {groups?.map((group) => (
+                    <SelectItem 
+                      key={group.hash_code_login} 
+                      value={group.hash_code_login}
+                      startContent={<FiUsers className="text-default-400" />}
+                    >
+                      {group.group_number}
+                    </SelectItem>
+                  ))}
+                </Select>
+                
+                {selectedGroup && (
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <FiUser className="text-default-400" />
+                      <span>Студентов:</span>
+                      <Badge 
+                        content={groups?.find(g => g.hash_code_login === selectedGroup)?.users.length || 0}
+                        color="primary"
+                        shape="circle"
+                        size="lg"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FiBook className="text-default-400" />
+                      <span>Заданий:</span>
+                      <Badge 
+                        content={groupResults?.available_tasks.length || 0}
+                        color="secondary"
+                        shape="circle"
+                        size="lg"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      </motion.div>
+
+      {selectedGroup && (
+        <motion.div variants={slideUp}>
+          <Card className="shadow-lg" >
+            <CardHeader className="border-b border-default-200 p-6">
+              <div className="flex justify-between w-full items-center">
+                <h2 className="text-xl font-semibold">
+                  Результаты группы: {groups?.find(g => g.hash_code_login === selectedGroup)?.group_number}
+                </h2>
+              </div>
+            </CardHeader>
+            <CardBody className="p-0">
+              {isLoadingResults ? (
+                <div className="flex justify-center py-12">
+                  <Spinner size="lg" />
+                </div>
+              ) : isResultsError ? (
+                <EmptyState
+                  icon={<FiAlertCircle className="text-danger" size={48} />}
+                  title="Ошибка загрузки"
+                  description="Не удалось загрузить результаты группы"
+                  action={
+                    <Button 
+                      color="primary" 
+                      onClick={() => fetchResults(selectedGroup)}
+                    >
+                      Попробовать снова
+                    </Button>
+                  }
+                />
+              ) : (
+                <Tabs 
+                  aria-label="Results tabs" 
+                  variant="underlined"
+                  classNames={{
+                    panel: "p-6"
+                  }}
+                >
+                  <Tab 
+                    key="students" 
+                    title={
+                      <div className="flex items-center gap-2">
+                        <FiUser /> По студентам
+                      </div>
+                    }
+                  >
+                    <Table 
+                      aria-label="Students results table"
+                      removeWrapper
+                      classNames={{
+                        th: "bg-default-100",
+                        tr: "hover:bg-default-100 transition-colors"
+                      }}
+                    >
                       <TableHeader>
                         <TableColumn>Студент</TableColumn>
                         <TableColumn>Попыток</TableColumn>
                         <TableColumn>Завершено</TableColumn>
                         <TableColumn>В процессе</TableColumn>
                         <TableColumn>Не начато</TableColumn>
+                        <TableColumn>Прогресс</TableColumn>
                       </TableHeader>
                       <TableBody>
                         {groupResults?.users_attempts.map((user) => {
                           const completedCount = user.attempts.filter(a => a.status === 'completed').length;
                           const inProgressCount = user.attempts.filter(a => a.status === 'in_progress').length;
                           const notStartedCount = groupResults.available_tasks.length - completedCount - inProgressCount;
+                          const progressValue = (completedCount / groupResults.available_tasks.length) * 100;
                           
                           return (
                             <TableRow key={user.id_user}>
-                              <TableCell>{user.user_name}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Avatar name={user.user_name} size="sm" />
+                                  <span>{user.user_name}</span>
+                                </div>
+                              </TableCell>
                               <TableCell>
                                 <Badge 
                                   content={user.attempts.length} 
@@ -268,16 +331,36 @@ export const ResultsPage = () => {
                                   size="lg"
                                 />
                               </TableCell>
+                              <TableCell>
+                                <Progress 
+                                  value={progressValue |5} 
+                                  size="sm" 
+                                  color={progressValue > 80 ? 'success' : progressValue > 30 ? 'warning' : 'danger'}
+                                  className="max-w-[150px]"
+                                />
+                              </TableCell>
                             </TableRow>
                           );
                         })}
                       </TableBody>
                     </Table>
-                  </div>
-                </Tab>
-                <Tab key="tasks" title="По заданиям">
-                  <div className="mt-4">
-                    <Table aria-label="Tasks results table">
+                  </Tab>
+                  <Tab 
+                    key="tasks" 
+                    title={
+                      <div className="flex items-center gap-2">
+                        <FiBook /> По заданиям
+                      </div>
+                    }
+                  >
+                    <Table 
+                      aria-label="Tasks results table"
+                      removeWrapper
+                      classNames={{
+                        th: "bg-default-100",
+                        tr: "hover:bg-default-100 transition-colors"
+                      }}
+                    >
                       <TableHeader>
                         <TableColumn>Задание</TableColumn>
                         <TableColumn>Попыток</TableColumn>
@@ -347,70 +430,90 @@ export const ResultsPage = () => {
                                       size="lg"
                                     />
                                   )
-                                  : 'Нет данных'}
+                                  : '-'}
                               </TableCell>
                             </TableRow>
                           );
                         })}
                       </TableBody>
                     </Table>
-                  </div>
-                </Tab>
-                <Tab key="details" title="Подробный отчет">
-                  <div className="mt-4 space-y-6">
-                    {groupResults?.users_attempts.map((user) => (
-                      <div key={user.id_user} className="border rounded-lg p-4">
-                        <h3 className="font-medium text-lg mb-3">{user.user_name}</h3>
-                        {user.attempts.length === 0 ? (
-                          <div className="text-default-500">Нет попыток</div>
-                        ) : (
-                          <Table aria-label="User attempts table">
-                            <TableHeader>
-                              <TableColumn>Задание</TableColumn>
-                              <TableColumn>Статус</TableColumn>
-                              <TableColumn>Балл</TableColumn>
-                              <TableColumn>Начало</TableColumn>
-                              <TableColumn>Завершение</TableColumn>
-                            </TableHeader>
-                            <TableBody>
-                              {user.attempts.map((attempt) => (
-                                <TableRow key={attempt.id_result}>
-                                  <TableCell>
-                                    <div className="font-medium">{attempt.task.task_name}</div>
-                                    <div className="text-default-500 text-sm">
-                                      {attempt.task.description}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>{getStatusBadge(attempt.status)}</TableCell>
-                                  <TableCell>
-                                    {attempt.score ? (
-                                      <Badge 
-                                        content={attempt.score} 
-                                        color="success" 
-                                        shape="circle" 
-                                        size="lg"
-                                      />
-                                    ) : (
-                                      <Tooltip content="Ожидает проверки">
-                                        <span><FiInfo className="text-default-400" /></span>
-                                      </Tooltip>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>{formatDate(attempt.date_start)}</TableCell>
-                                  <TableCell>{formatDate(attempt.date_finish)}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        )}
+                  </Tab>
+                  <Tab 
+                    key="details" 
+                    title={
+                      <div className="flex items-center gap-2">
+                        <FiInfo /> Подробный отчет
                       </div>
-                    ))}
-                  </div>
-                </Tab>
-              </Tabs>
-            )}
-          </CardBody>
-        </Card>
+                    }
+                  >
+                    <div className="space-y-6">
+                      {groupResults?.users_attempts.map((user) => (
+                        <motion.div 
+                          key={user.id_user} 
+                          variants={scaleUp}
+                          className="border border-default-200 rounded-lg p-6 hover:shadow-sm transition-shadow"
+                        >
+                          <h3 className="font-medium text-lg mb-4 flex items-center gap-3">
+                            <Avatar name={user.user_name} size="sm" />
+                            {user.user_name}
+                          </h3>
+                          {user.attempts.length === 0 ? (
+                            <div className="text-default-500 p-4">Нет попыток</div>
+                          ) : (
+                            <Table 
+                              aria-label="User attempts table"
+                              removeWrapper
+                              classNames={{
+                                th: "bg-default-100",
+                              }}
+                            >
+                              <TableHeader>
+                                <TableColumn>Задание</TableColumn>
+                                <TableColumn>Статус</TableColumn>
+                                <TableColumn>Балл</TableColumn>
+                                <TableColumn>Начало</TableColumn>
+                                <TableColumn>Завершение</TableColumn>
+                              </TableHeader>
+                              <TableBody>
+                                {user.attempts.map((attempt) => (
+                                  <TableRow key={attempt.id_result}>
+                                    <TableCell>
+                                      <div className="font-medium">{attempt.task.task_name}</div>
+                                      <div className="text-default-500 text-sm">
+                                        {attempt.task.description}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>{getStatusBadge(attempt.status)}</TableCell>
+                                    <TableCell>
+                                      {attempt.score ? (
+                                        <Badge 
+                                          content={attempt.score} 
+                                          color="success" 
+                                          shape="circle" 
+                                          size="lg"
+                                        />
+                                      ) : (
+                                        <Tooltip content="Ожидает проверки">
+                                          <FiInfo className="text-default-400 text-lg" />
+                                        </Tooltip>
+                                      )}
+                                    </TableCell>
+                                    <TableCell>{formatDate(attempt.date_start)}</TableCell>
+                                    <TableCell>{formatDate(attempt.date_finish)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </Tab>
+                </Tabs>
+              )}
+            </CardBody>
+          </Card>
+        </motion.div>
       )}
 
       <ErrorModal 
@@ -418,6 +521,6 @@ export const ResultsPage = () => {
         onClose={() => setIsErrorModalOpen(false)} 
         errorMessage={errorMessage} 
       />
-    </div>
+    </motion.div>
   );
 };
