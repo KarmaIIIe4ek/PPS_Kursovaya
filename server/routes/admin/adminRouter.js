@@ -10,9 +10,7 @@ const purchaseController = require('../../controllers/purchaseController')
 
 router.post('/auth/login', adminController.loginAdmin)
 router.get('/auth/check', adminAuthMiddleware, adminController.checkAdmin)
-
-router.post('/createAdmin', adminAuthMiddleware, adminController.createAdmin)
-router.post('/updateAdmin', adminAuthMiddleware, adminController.editAdminSelfFromToken)
+router.get('/auth/getInfoAboutSelf', adminAuthMiddleware, adminController.getInfoAboutSelf)
 
 router.use('/blacklist', blacklistRouter)
 
