@@ -17,7 +17,7 @@ router.use('/blacklist', blacklistRouter)
 router.get('/support/getAllAppeal', adminAuthMiddleware, supportController.getAll)
 router.post('/support/sendResponse', adminAuthMiddleware, supportController.sendResponseToSupport)
 
-router.get('/user/getAllStudents', adminAuthMiddleware, adminUserController.getAllStudents)
+router.get('/user/getAll', adminAuthMiddleware, adminUserController.getAllStudents)
 router.get('/user/getAllTeachers', adminAuthMiddleware, adminUserController.getAllTeacher)
 router.post('/user/editUserByID', adminAuthMiddleware, adminUserController.editUserByID)
 

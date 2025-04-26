@@ -43,7 +43,7 @@ export const Login = ({ setSelected, onError }: Props) => {
     try {
       await login(data).unwrap()
       await triggerGetInfoAboutSelfQuery()
-      navigate("/")
+      navigate("/profile")
     } catch (err: any) {
       if (err.data?.message) {
         onError?.(err.data.message) // Передаем ошибку в родительский компонент

@@ -12,6 +12,13 @@ export type User = {
   updatedAt: Date
 }
 
+export type Blacklist = {
+  id_blacklist: number
+  date_added: Date
+  reason: string
+  user: User
+}
+
 export type Admin = {
   id_user: number
   email: string

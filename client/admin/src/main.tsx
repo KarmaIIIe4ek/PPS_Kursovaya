@@ -11,6 +11,11 @@ import { Layout } from "./components/layout"
 import { Auth } from "./pages/auth"
 import { AuthGuard } from "./features/user/authGuard"
 import { HomePage } from "./pages/home"
+import { TasksPage } from "./pages/tasks"
+import { PurchasesPage } from "./pages/purchases"
+import { UsersPage } from "./pages/users"
+import { BlacklistPage } from "./pages/blacklist"
+import { SupportPage } from "./pages/support"
 
 const router = createBrowserRouter([
   {
@@ -28,7 +33,27 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <HomePage />, 
-      }
+      },
+      {
+        path: "tasks",
+        element: <TasksPage />, 
+      },
+      {
+        path: "purchases",
+        element: <PurchasesPage />, 
+      },
+      {
+        path: "users",
+        element: <UsersPage />, 
+      },
+      {
+        path: "blacklist",
+        element: <BlacklistPage />, 
+      },
+      {
+        path: "support",
+        element: <SupportPage />, 
+      },
     ],
   },
 ])

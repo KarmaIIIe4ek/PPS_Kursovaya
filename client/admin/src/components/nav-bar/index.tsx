@@ -1,13 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavButton } from '../nav-button';
 import { FiHome, FiMail, FiUsers, FiChevronDown, FiMoon, FiSun } from 'react-icons/fi';
-import { MdCurrencyRuble, MdOutlineAnalytics } from 'react-icons/md';
+import { MdCurrencyRuble, MdOutlineAnalytics, MdOutlineContactSupport } from 'react-icons/md';
+import { TbLockAccessOff } from "react-icons/tb";
 import { useGetInfoAboutSelfQuery } from "../../app/services/userApi";
 import { Spinner } from "@heroui/react";
 import { BiTask } from 'react-icons/bi';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
+import { FaRubleSign, FaTasks } from 'react-icons/fa';
 
 
 // Анимации
@@ -67,7 +69,6 @@ export const NavBar = () => {
     );
   }
 
-  const isTeacher = user?.role_name === "teacher";
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -102,14 +103,14 @@ export const NavBar = () => {
 
         <motion.li 
           variants={navItem}
-          custom={isTeacher ? 7 : 4}
+          custom={7}
           whileHover="hover"
           whileTap="tap"
           className="w-full mt-2"
         >
           <NavButton 
             href='/tasks' 
-            icon={<BiTask />} 
+            icon={<FaTasks  />} 
             className={`w-full justify-start ${isActive('/tasks') ? 'bg-primary-100' : ''}`}
             active={isActive('/tasks')}
           >
@@ -126,7 +127,7 @@ export const NavBar = () => {
         >
           <NavButton 
             href='/purchases' 
-            icon={<FiMail />} 
+            icon={<MdCurrencyRuble  />} 
             className={`w-full justify-start ${isActive('/purchases') ? 'bg-primary-100' : ''}`}
             active={isActive('/purchases')}
           >
@@ -143,7 +144,7 @@ export const NavBar = () => {
         >
           <NavButton 
             href='/users' 
-            icon={<FiMail />} 
+            icon={<FiUsers />} 
             className={`w-full justify-start ${isActive('/users') ? 'bg-primary-100' : ''}`}
             active={isActive('/users')}
           >
@@ -160,7 +161,7 @@ export const NavBar = () => {
         >
           <NavButton 
             href='/blacklist' 
-            icon={<FiUsers />} 
+            icon={<TbLockAccessOff  />} 
             className={`w-full justify-start ${isActive('/blacklist') ? 'bg-primary-100' : ''}`}
             active={isActive('/blacklist')}
           >
@@ -176,7 +177,7 @@ export const NavBar = () => {
         >
           <NavButton 
             href='/support' 
-            icon={<FiMail />} 
+            icon={<MdOutlineContactSupport  />} 
             className={`w-full justify-start ${isActive('/support') ? 'bg-primary-100' : ''}`}
             active={isActive('/support')}
           >
