@@ -102,23 +102,6 @@ export const NavBar = () => {
 
         <motion.li 
           variants={navItem}
-          custom={1}
-          whileHover="hover"
-          whileTap="tap"
-          className="w-full"
-        >
-          <NavButton 
-            href='/support' 
-            icon={<FiMail />} 
-            className={`w-full justify-start ${isActive('/support') ? 'bg-primary-100' : ''}`}
-            active={isActive('/support')}
-          >
-            Поддержка
-          </NavButton>
-        </motion.li>
-
-        <motion.li 
-          variants={navItem}
           custom={2}
           whileHover="hover"
           whileTap="tap"
@@ -243,6 +226,22 @@ export const NavBar = () => {
             </AnimatePresence>
           </>
         )}
+        <motion.li 
+          variants={navItem}
+          custom={1}
+          whileHover="hover"
+          whileTap="tap"
+          className="w-full mt-3"
+        >
+          <NavButton 
+            href='/support' 
+            icon={<FiMail />} 
+            className={`w-full justify-start ${isActive('/support') ? 'bg-primary-100' : ''}`}
+            active={isActive('/support')}
+          >
+            Поддержка
+          </NavButton>
+        </motion.li>
 
         
       </motion.ul>

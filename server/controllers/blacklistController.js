@@ -80,7 +80,6 @@ class BlacklistController {
                 include: [
                     {
                         model: User,
-                        attributes: ['lastname', 'firstname', 'middlename', 'email'],
                     }
                 ]
             });
@@ -90,14 +89,20 @@ class BlacklistController {
                 const user = entry.user || {}; // Если User отсутствует, используем пустой объект
                 return {
                     id_blacklist: entry.id_blacklist,
-                    id_user: entry.id_user,
-                    date_added: entry.date_added,
+                    date_added: entry.createdAt,
                     reason: entry.reason,
                     user: {
-                        lastname: user.lastname || null, // Если lastname отсутствует, возвращаем null
-                        firstname: user.firstname || null,
+                        id_user: user.id_user,
+                        email: user.email,
+                        lastname: user.lastname,
+                        firstname: user.firstname,
                         middlename: user.middlename || null,
-                        email: user.email || null,
+                        role_name: user.role_name,
+                        last_login: user.last_login,
+                        is_blocked: user.is_blocked,
+                        is_deleted: user.is_deleted,
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
                     }
                 };
             });

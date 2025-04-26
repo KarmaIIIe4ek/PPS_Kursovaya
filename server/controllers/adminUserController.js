@@ -6,8 +6,7 @@ class UserController {
         try {
             // Получаем все записи из blacklist с включением данных из таблицы User и Group
             const studentsEntries = await User.findAll({
-                attributes: [ 'id_user', 'email', 'lastname', 'firstname', 'middlename', 'last_login', 'role_name', 'is_blocked'],
-                where: {role_name: 'student'}
+                order: [['id_user', 'ASC']]
             });
             // Форматируем ответ, чтобы включить только нужные данные
             const formattedStudents = studentsEntries.map(entry => {
@@ -17,9 +16,12 @@ class UserController {
                     lastname: entry.lastname,
                     firstname: entry.firstname,
                     middlename: entry.middlename || null,
-                    last_login: entry.last_login || null,
                     role_name: entry.role_name,
-                    is_blocked: entry.is_blocked
+                    last_login: entry.last_login || null,
+                    is_blocked: entry.is_blocked,
+                    is_deleted: entry.is_deleted,
+                    createdAt: entry.createdAt,
+                    updatedAt: entry.updatedAt,
                 };
             });
     
@@ -44,9 +46,12 @@ class UserController {
                     lastname: entry.lastname,
                     firstname: entry.firstname,
                     middlename: entry.middlename || null,
-                    last_login: entry.last_login || null,
                     role_name: entry.role_name,
-                    is_blocked: entry.is_blocked
+                    last_login: entry.last_login || null,
+                    is_blocked: entry.is_blocked,
+                    is_deleted: entry.is_deleted,
+                    createdAt: entry.createdAt,
+                    updatedAt: entry.updatedAt,
                 };
             });
     
@@ -79,36 +84,39 @@ class UserController {
                 where: { email: email }
             });
 
+
             // Если email уже используется другим пользователем
-            if (existingUser && existingUser.id_user !== id_user) {
+            if (existingUser.id_user != id_user) {
                 return res.status(400).json({ message: "Email уже используется другим пользователем" });
             }
             
             // Обновление данных пользователя
-            const updatedUser = await user.update({
+            const entry = await user.update({
                 email: email || user.email,
                 password: password ? (await bcrypt.hash(password, 5)) : user.password,
                 lastname: lastname || user.lastname,
                 firstname: firstname || user.firstname,
                 middlename: middlename || user.middlename,
                 last_login: last_login || user.last_login,
-                role_name: user.role_name,
                 is_blocked: is_blocked !== undefined ? is_blocked : user.is_blocked // Если is_blocked не передан, оставляем старый
             });
     
             // Форматируем ответ
             const formattedUser = {
-                id_user: updatedUser.id_user,
-                email: updatedUser.email,
-                lastname: updatedUser.lastname,
-                firstname: updatedUser.firstname,
-                middlename: updatedUser.middlename || null,
-                last_login: updatedUser.last_login || null,
-                role_name: updatedUser.role_name,
-                is_blocked: updatedUser.is_blocked
+                id_user: entry.id_user,
+                email: entry.email,
+                lastname: entry.lastname,
+                firstname: entry.firstname,
+                middlename: entry.middlename || null,
+                role_name: entry.role_name,
+                last_login: entry.last_login || null,
+                is_blocked: entry.is_blocked,
+                is_deleted: entry.is_deleted,
+                createdAt: entry.createdAt,
+                updatedAt: entry.updatedAt,
             };
     
-            return res.json(formattedUser);
+            return res.json({message: "Пользователь успешно изменён"});
         } catch (e) {
             console.error('Ошибка при обновлении данных пользователя:', e.message);
             return res.status(500).json({ message: "Произошла ошибка при обновлении данных пользователя" });

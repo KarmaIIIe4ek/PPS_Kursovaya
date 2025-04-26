@@ -50,7 +50,7 @@ services:
     networks:  # Добавьте это!
       - app-network
 
-  # Frontend сервис (Vite) - пользовательский клиент
+  # Frontend сервис (Vite) - Клиент пользователя
   frontend-user:
     build:
       context: ./client/user-client-app
@@ -65,7 +65,23 @@ services:
       - CHOKIDAR_USEPOLLING=true
     networks:  # Добавьте это!
       - app-network
-
+    
+  # Frontend сервис (Vite) - Клиент администратора
+  frontend-admin:
+    build:
+      context: ./client/admin
+      dockerfile: Dockerfile
+    container_name: frontend-admin
+    ports:
+      - "5174:5174"  # Стандартный порт Vite
+    volumes:
+      - ./client/admin:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:  # Добавьте это!
+      - app-network
+      
   # Nginx сервис
   nginx:
     image: nginx:alpine
@@ -77,6 +93,7 @@ services:
     depends_on:
       - backend
       - frontend-user
+      - frontend-admin
     networks:
       - app-network
 

@@ -23,6 +23,7 @@ import { MakeTask } from "./pages/makeTask"
 import { VirtualLab } from "./pages/virtual-lab-1"
 import { VirtualLab2 } from "./pages/virtual-lab-2"
 import { VirtualLab3 } from "./pages/virtual-lab-3"
+import Providers from "./components/providers.tsx"
 
 const router = createBrowserRouter([
   {
@@ -109,9 +110,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider>
-        <HeroUIProvider>
+        <Providers>
             <RouterProvider router={router} />
-        </HeroUIProvider>
+        </Providers>
       </ThemeProvider>
     </Provider>
   </React.StrictMode>,
