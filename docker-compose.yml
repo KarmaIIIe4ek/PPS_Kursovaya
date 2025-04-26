@@ -88,6 +88,7 @@ services:
     container_name: nginx-proxy
     ports:
       - "80:80"      # HTTP
+      - "8080:8080"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d  # Конфиги Nginx
     depends_on:
